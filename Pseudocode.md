@@ -9,3 +9,12 @@ High level approach:
 4. Playback queued messages, discarding sequence numbers before or equal to the snapshot sequence number.
 5. Apply playback messages to the snapshot as needed (see below).
 6. After playback is complete, apply real-time stream messages as they arrive.
+
+^
+|
+| P 	Asks: I can buy (i.e. what people ask)
+| R	
+| I		Best prices; matching
+| C	
+| E 	Bids: I can sell (i.e. what people bid)
+|

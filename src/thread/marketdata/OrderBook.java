@@ -1,15 +1,12 @@
 package thread.marketdata;
 
-import java.util.logging.Logger;
-
 import thread.marketdata.Products.Product;
 
 public class OrderBook {
-	
-	final Logger log = Logger.getLogger("thread.marketdata.OrderBookBuilder");
-	
+		
 	Product product;
 	Integer timeStampMillis;
+	Integer sequenceNumber;
 	Boolean isStale;
 	
 	Double BidPrice2;
@@ -29,5 +26,20 @@ public class OrderBook {
 	OrderBook(Product product) {
 		this.product = product;
 		isStale = true;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("OrderBook: Product "+product.id);
+		sb.append(" isStale "+isStale.toString());
+		sb.append(" sequence number "+sequenceNumber.toString());
+		sb.append(" [Bid2 "+BidPrice2+"x"+BidSize2);
+		sb.append(" Bid1 "+BidPrice1+"x"+BidSize1);
+		sb.append(" Bid0 "+BidPrice0+"x"+BidSize0);
+		sb.append(" Ask0 "+AskPrice0+"x"+AskSize0);
+		sb.append(" Ask1 "+AskPrice1+"x"+AskSize1);
+		sb.append(" Ask2 "+AskPrice2+"x"+AskSize2+"]");
+		return sb.toString();
 	}
 }
