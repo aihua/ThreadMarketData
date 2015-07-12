@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
-import java.util.Queue;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -22,7 +21,7 @@ public class OrderBookBuilder {
 	final Gson gson = new Gson();
 	
 	RawOrderBookImage r;
-	Queue<RawOrderBookUpdate> queue;
+	LinkedBlockingQueue<RawOrderBookUpdate> queue;
 	WebSocketClient client;
 	MarketDataSocket socket;
 	Exchange exchange;
@@ -81,7 +80,7 @@ public class OrderBookBuilder {
 
 	}
 	
-	void run() {
+	void run() throws InterruptedException {
 		// Start filling queue and get initial market data image
 		initialize();
 		
@@ -119,8 +118,13 @@ public class OrderBookBuilder {
 		o.AskSize2 = askMap.get(o.AskPrice2);
 		log.info("Built initial OrderBook "+o.toString());
 		
-		// Process queue
-		
+		// Process queue: this loops indefinitely, blocking on queue.take()
+		while (true) {
+			RawOrderBookUpdate r = queue.take();
+			if (Integer.parseInt(r.sequence) > o.sequenceNumber) {
+				// Do stuff
+			}
+		}
 		
 	}
 	

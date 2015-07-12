@@ -12,8 +12,8 @@ public class MarketData {
 		log.info("Got products from exchange: "+p.getProducts().toString());
 	
 		OrderBookBuilder o = new OrderBookBuilder(Exchange.PRODUCTION, p.products.get(0));
-		o.run();
 		try {
+			o.run();
 			Thread.sleep(3000);
 			o.shutdown();
 		} catch (InterruptedException e) {
