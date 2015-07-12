@@ -6,6 +6,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.logging.Logger;
 import java.util.concurrent.TimeUnit;
+
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
@@ -13,12 +15,12 @@ import com.google.gson.Gson;
 
 public class MarketData {
 
-	final static Logger log = Logger.getLogger("thread.marketdata.Products");
+	final static Logger log = Logger.getLogger("thread.marketdata.MarketData");
 	
 	public static void main(String[] args) {
 		// Get products:
-		// Products p = new Products(Exchange.SANDBOX);
-		// System.out.println(p.getProducts().toString());
+		Products p = new Products(Exchange.SANDBOX);
+		log.info("Got products from exchange: "+p.getProducts().toString());
 		
 		/* Get order book image:
 		final Gson gson = new Gson();
@@ -32,20 +34,25 @@ public class MarketData {
 			e.printStackTrace();
 		} */
 		
-		WebSocketClient client = new WebSocketClient();
-		SimpleEchoSocket socket = new SimpleEchoSocket();
+		
+		
+		SslContextFactory sslContextFactory = new SslContextFactory();
+		WebSocketClient client = new WebSocketClient(sslContextFactory);
+		MarketDataSocket socket = new MarketDataSocket();
 		try {
 			client.start();
-			URI uri = new URI("ws://echo.websocket.org");
+			URI uri = new URI(Exchange.PRODUCTION.websocket);
+			log.info("Connecting to:"+uri.toString());
 			ClientUpgradeRequest request = new ClientUpgradeRequest();
 			client.connect(socket, uri, request);
-			log.info("Connecting to:"+uri.toString());
 			socket.awaitClose(5, TimeUnit.SECONDS);
+			
 		} catch (Exception e) {
 			log.severe("Caught exception opening websocket: "+e.getMessage());
 			e.printStackTrace();
 		} finally {
 			try {
+				log.info("Closing websocket client");
 				client.stop();
 			} catch (Exception e) {
 				log.severe("Caught exception closing client: "+e.getMessage());
