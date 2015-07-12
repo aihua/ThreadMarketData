@@ -6,23 +6,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
-@WebSocket(maxTextMessageSize = 1024 * 1024)
+import com.google.gson.Gson;
+
+@WebSocket(maxTextMessageSize = 64 * 1024)
 public class MarketDataSocket {
 	 
 	private final CountDownLatch closeLatch;
+	final Gson gson;
 	final static Logger log = Logger.getLogger("thread.marketdata.MarketDataSocket");
  
     Session session;
+    Products.Product product;
  
-    public MarketDataSocket() {
+    public MarketDataSocket(Products.Product product) {
     	this.closeLatch = new CountDownLatch(1);
-        log.info("Created MarketDataSocket");
+    	this.product = product;
+    	this.gson = new Gson();
+        log.info("Created MarketDataSocket for product: "+product.id);
     }
   
     public boolean awaitClose(int duration, TimeUnit unit) throws InterruptedException {
@@ -40,9 +45,12 @@ public class MarketDataSocket {
     public void onConnect(Session session) {
         this.session = session;
         log.info("Websocket onConnect");
+        ProductSubscription ps = new ProductSubscription(product);
+        String psString = gson.toJson(ps);
+        log.info("About to submit product subscription: "+psString);
         try {
         	Future<Void> fut;
-        	fut = session.getRemote().sendStringByFuture("{\"type\": \"subscribe\", \"product_id\": \"BTC-USD\"}");
+        	fut = session.getRemote().sendStringByFuture(psString);
         	fut.get(60, TimeUnit.SECONDS);
  //       	session.close(StatusCode.NORMAL, "I'm done");
         } catch (Exception e) {
@@ -53,18 +61,8 @@ public class MarketDataSocket {
  
     @OnWebSocketMessage
     public void onMessage(String msg) {
-        log.info("Websocket onMessage: "+msg);
-    }
-    
-    public void sendMessage(String msg) {
-    	Future<Void> fut;
-        fut = session.getRemote().sendStringByFuture(msg);
-        try {
-        	fut.get();
-        } catch (Exception e) {
-        	log.severe("Caught exception from websocket sendMessage: "+e.getMessage());
-        	e.printStackTrace();
-        }
+        RawOrderBookUpdate r = gson.fromJson(msg, RawOrderBookUpdate.class);
+        log.info("Websocket onMessage: tick sequence "+r.sequence);
     }
     
     public void logSessionStatus() {

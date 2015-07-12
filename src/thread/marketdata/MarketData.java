@@ -33,12 +33,9 @@ public class MarketData {
 			log.severe("Error: "+e.getMessage());
 			e.printStackTrace();
 		} */
-		
-		
-		
-		SslContextFactory sslContextFactory = new SslContextFactory();
-		WebSocketClient client = new WebSocketClient(sslContextFactory);
-		MarketDataSocket socket = new MarketDataSocket();
+	
+		WebSocketClient client = new WebSocketClient(new SslContextFactory());
+		MarketDataSocket socket = new MarketDataSocket(p.getProducts().get(0));
 		try {
 			client.start();
 			URI uri = new URI(Exchange.PRODUCTION.websocket);
