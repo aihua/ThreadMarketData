@@ -5,6 +5,9 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
+import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import com.google.gson.Gson;
 
