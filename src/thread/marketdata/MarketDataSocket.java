@@ -1,5 +1,6 @@
 package thread.marketdata;
 
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -17,16 +18,17 @@ import com.google.gson.Gson;
 public class MarketDataSocket {
 	 
 	private final CountDownLatch closeLatch;
-	final Gson gson;
-	final static Logger log = Logger.getLogger("thread.marketdata.MarketDataSocket");
+	final Gson gson = new Gson();
+	final Logger log = Logger.getLogger("thread.marketdata.MarketDataSocket");
  
     Session session;
     Products.Product product;
+    Queue<RawOrderBookUpdate> queue;
  
-    public MarketDataSocket(Products.Product product) {
+    public MarketDataSocket(Products.Product product, Queue<RawOrderBookUpdate> queue) {
     	this.closeLatch = new CountDownLatch(1);
     	this.product = product;
-    	this.gson = new Gson();
+    	this.queue = queue;
         log.info("Created MarketDataSocket for product: "+product.id);
     }
   
@@ -49,10 +51,9 @@ public class MarketDataSocket {
         String psString = gson.toJson(ps);
         log.info("About to submit product subscription: "+psString);
         try {
-        	Future<Void> fut;
+        	@SuppressWarnings("unused")
+			Future<Void> fut;
         	fut = session.getRemote().sendStringByFuture(psString);
-        	fut.get(60, TimeUnit.SECONDS);
- //       	session.close(StatusCode.NORMAL, "I'm done");
         } catch (Exception e) {
         	log.severe("Caught exception onConnect: "+e.getMessage());
         	e.printStackTrace();
@@ -63,6 +64,7 @@ public class MarketDataSocket {
     public void onMessage(String msg) {
         RawOrderBookUpdate r = gson.fromJson(msg, RawOrderBookUpdate.class);
         log.info("Websocket onMessage: tick sequence "+r.sequence);
+        queue.add(r);
     }
     
     public void logSessionStatus() {
