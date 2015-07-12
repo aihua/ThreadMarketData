@@ -31,9 +31,9 @@
   		<version>2.3.1</version>
   	</dependency>
   	<dependency>
-  		<groupId>org.eclipse.jetty</groupId>
-  		<artifactId>jetty-websocket</artifactId>
-  		<version>8.1.17.v20150415</version>
+  		<groupId>org.eclipse.jetty.websocket</groupId>
+  		<artifactId>websocket-client</artifactId>
+  		<version>9.3.0.M2</version>
   	</dependency>
   </dependencies>
 </project>

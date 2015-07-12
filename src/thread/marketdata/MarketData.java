@@ -32,6 +32,26 @@ public class MarketData {
 			e.printStackTrace();
 		} */
 		
+		WebSocketClient client = new WebSocketClient();
+		SimpleEchoSocket socket = new SimpleEchoSocket();
+		try {
+			client.start();
+			URI uri = new URI("ws://echo.websocket.org");
+			ClientUpgradeRequest request = new ClientUpgradeRequest();
+			client.connect(socket, uri, request);
+			log.info("Connecting to:"+uri.toString());
+			socket.awaitClose(5, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			log.severe("Caught exception opening websocket: "+e.getMessage());
+			e.printStackTrace();
+		} finally {
+			try {
+				client.stop();
+			} catch (Exception e) {
+				log.severe("Caught exception closing client: "+e.getMessage());
+				e.printStackTrace();
+			}
+		}
 
 	}
 
