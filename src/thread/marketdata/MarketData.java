@@ -1,5 +1,6 @@
 package thread.marketdata;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 public class MarketData {
@@ -11,11 +12,14 @@ public class MarketData {
 		Products p = new Products(Exchange.PRODUCTION);
 		log.info("Got products from exchange: "+p.getProducts().toString());
 	
-		Thread OrderBookBuilderThread = new Thread(
-				new OrderBookBuilder(Exchange.PRODUCTION, p.products.get(0)),"OrderBookBuilderThread");
-		OrderBookBuilderThread.start();
+		LinkedBlockingQueue<OrderBook> queue = new LinkedBlockingQueue<OrderBook>();
 		
+		Thread OrderBookBuilderThread = new Thread(
+				new OrderBookBuilder(Exchange.PRODUCTION, p.products.get(0), queue),"OrderBookBuilderThread");
+		OrderBookBuilderThread.start();
 
+		Thread RedisPublisherThread = new Thread(new RedisPublisher(queue), "RedisPublisherThread");
+		RedisPublisherThread.start();
 	}
 
 }

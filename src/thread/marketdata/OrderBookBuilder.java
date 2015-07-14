@@ -31,16 +31,16 @@ public class OrderBookBuilder implements Runnable {
 	TreeMap<Double, Double> askMap;
 	Integer currentSequence;
 	
-	OrderBookBuilder(Exchange exchange, Products.Product product) {		
+	OrderBookBuilder(Exchange exchange, Products.Product product, LinkedBlockingQueue<OrderBook> outboundQueue) {		
 		this.exchange = exchange;
 		this.product = product;
+		this.outboundQueue = outboundQueue;
 	}
 	
 	void initialize() {
 		// Start from a fresh client, socket & queue (could be required if out-of-sequence messages received)
 		log.info("Initializing OrderBookBuilder");
 		inboundQueue = new LinkedBlockingQueue<RawOrderBookUpdate>();
-		outboundQueue = new LinkedBlockingQueue<OrderBook>();
 		bidMap = new TreeMap<Double, Double>();
 		askMap = new TreeMap<Double, Double>();
 
