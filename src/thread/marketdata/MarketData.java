@@ -11,14 +11,10 @@ public class MarketData {
 		Products p = new Products(Exchange.PRODUCTION);
 		log.info("Got products from exchange: "+p.getProducts().toString());
 	
-		OrderBookBuilder o = new OrderBookBuilder(Exchange.PRODUCTION, p.products.get(0));
-		try {
-			o.run();
-			Thread.sleep(3000);
-			o.shutdown();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		Thread OrderBookBuilderThread = new Thread(
+				new OrderBookBuilder(Exchange.PRODUCTION, p.products.get(0)),"OrderBookBuilderThread");
+		OrderBookBuilderThread.start();
+		
 
 	}
 

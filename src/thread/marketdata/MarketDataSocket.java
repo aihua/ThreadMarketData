@@ -62,9 +62,9 @@ public class MarketDataSocket {
  
     @OnWebSocketMessage
     public void onMessage(String msg) {
-        RawOrderBookUpdate r = gson.fromJson(msg, RawOrderBookUpdate.class);
-        // log.info("Websocket onMessage: tick sequence "+r.sequence);
-        queue.add(r);
+            RawOrderBookUpdate r = gson.fromJson(msg, RawOrderBookUpdate.class);
+            log.finest("Websocket onMessage: tick sequence "+r.sequence);
+            queue.add(r);
     }
     
     public void logSessionStatus() {

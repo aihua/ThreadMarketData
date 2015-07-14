@@ -15,20 +15,21 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import com.google.gson.Gson;
 
-public class OrderBookBuilder {
+public class OrderBookBuilder implements Runnable {
 	
 	final Logger log = Logger.getLogger("thread.marketdata.OrderBookBuilder");
 	final Gson gson = new Gson();
 	
-	RawOrderBookImage r;
-	LinkedBlockingQueue<RawOrderBookUpdate> queue;
+	RawOrderBookImage initialImage;
+	LinkedBlockingQueue<RawOrderBookUpdate> inboundQueue;
+	LinkedBlockingQueue<OrderBook> outboundQueue;
 	WebSocketClient client;
 	MarketDataSocket socket;
 	Exchange exchange;
 	Products.Product product;
-	OrderBook o;
 	TreeMap<Double, Double> bidMap;
 	TreeMap<Double, Double> askMap;
+	Integer currentSequence;
 	
 	OrderBookBuilder(Exchange exchange, Products.Product product) {		
 		this.exchange = exchange;
@@ -36,17 +37,17 @@ public class OrderBookBuilder {
 	}
 	
 	void initialize() {
-		// Start from a fresh order book/queue (could be required if out-of-sequence messages received)
+		// Start from a fresh client, socket & queue (could be required if out-of-sequence messages received)
 		log.info("Initializing OrderBookBuilder");
-		queue = new LinkedBlockingQueue<RawOrderBookUpdate>();
-		o = new OrderBook(product);
+		inboundQueue = new LinkedBlockingQueue<RawOrderBookUpdate>();
+		outboundQueue = new LinkedBlockingQueue<OrderBook>();
 		bidMap = new TreeMap<Double, Double>();
 		askMap = new TreeMap<Double, Double>();
 
 		// Start real-time subscription	filling queue	
 		log.info("Starting real time subscription");
 		client = new WebSocketClient(new SslContextFactory());
-		socket = new MarketDataSocket(product, queue);
+		socket = new MarketDataSocket(product, inboundQueue);
 		try {
 			client.start();
 			URI uri = new URI(exchange.websocket);
@@ -58,49 +59,49 @@ public class OrderBookBuilder {
 			e.printStackTrace();
 		}
 		
-		// Wait a bit until connection starts publishing data
+		// Wait for first update to come through
 		try {
-			Thread.sleep(2000);
+			log.info("OrderBookBuilder waiting for first delta update");
+			RawOrderBookUpdate ignored = inboundQueue.take();
+			log.info("OrderBookBuilder received and ignored first delta update, sequence "+ignored.sequence);
 		} catch (InterruptedException e1) {
-			log.severe("Caught InterruptedException while waiting for MarketDataSocket to initialize: "+e1.getMessage());
+			log.severe("Interrupted while waiting for first inbound market data update");
 			e1.printStackTrace();
 		}
 		
-		// Get order book image
-		log.info("Getting order book image");
+		// Get initial order book image from webservice and populate bid/ask maps
+		log.info("Getting initial order book image");
 		try {
 			URL url = new URL(exchange.API + "/products/" + product.id + "/book?level=2");
 		    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-			r = gson.fromJson(in.readLine(), RawOrderBookImage.class);
-			log.info("Got RawOrderBookImage with sequence number "+r.sequence);
+			initialImage = gson.fromJson(in.readLine(), RawOrderBookImage.class);
+			log.info("Got initial order book image with sequence number "+initialImage.sequence);
 		} catch (Exception e) {
 			log.severe("Error when polling order book image: "+e.getMessage());
 			e.printStackTrace();
 		}
-
-	}
-	
-	void run() throws InterruptedException {
-		// Start filling queue and get initial market data image
-		initialize();
-		
-		// Build TreeMap from initial RawOrderBookImage
-		o.sequenceNumber = Integer.parseInt(r.sequence);
-		for (String[] array: r.bids) {
+		currentSequence = Integer.parseInt(initialImage.sequence);
+		for (String[] array: initialImage.bids) {
 			Double price = Double.parseDouble(array[0]);
 			Double size = Double.parseDouble(array[1]);
 			// Ignore array[2], num-orders
 			bidMap.put(price, size);
-			//log.info("Putting px "+price.toString()+"x"+size.toString()+" into bid map");
+			log.finest("Putting px "+price.toString()+"x"+size.toString()+" into bid map");
 		}
-		for (String[] array: r.asks) {
+		for (String[] array: initialImage.asks) {
 			Double price = Double.parseDouble(array[0]);
 			Double size = Double.parseDouble(array[1]);
 			// Ignore array[2], num-orders
 			askMap.put(price, size);
-			//log.info("Putting px "+price.toString()+"x"+size.toString()+" into ask map");
+			log.finest("Putting px "+price.toString()+"x"+size.toString()+" into ask map");
 		}
-		// Build OrderBook from TreeMap
+		publish();
+		log.info("Completed initialization and published first update");
+	}
+	
+	public void publish() {
+		OrderBook o = new OrderBook(product);
+		o.sequenceNumber = currentSequence;
 		Iterator<Double> i;
 		i = bidMap.descendingKeySet().iterator();
 		o.BidPrice0 = i.next();
@@ -116,15 +117,47 @@ public class OrderBookBuilder {
 		o.AskSize1 = askMap.get(o.AskPrice1);
 		o.AskPrice2 = i.next();
 		o.AskSize2 = askMap.get(o.AskPrice2);
-		log.info("Built initial OrderBook "+o.toString());
-		
-		// Process queue: this loops indefinitely, blocking on queue.take()
-		while (true) {
-			RawOrderBookUpdate r = queue.take();
-			if (Integer.parseInt(r.sequence) > o.sequenceNumber) {
-				// Do stuff
+		outboundQueue.add(o);
+	}
+	
+	public void run() {
+		// Start filling queue and get initial market data image
+		initialize();
+		log.info("Processing delta updates");
+		while (! Thread.currentThread().isInterrupted()) {
+			// Main loop in normal running
+			RawOrderBookUpdate delta;
+			try {
+				delta = inboundQueue.take();
+				if (Integer.parseInt(delta.sequence) <= currentSequence) {
+					// Ignore: before our snapshot
+					log.info("Ignoring delta "+delta.sequence+" as it's before our snapshot");
+				} else if (Integer.parseInt(delta.sequence) == (currentSequence + 1)) {
+					// Delta is next in sequence: update bid/ask maps
+					log.info("Processing delta "+delta.sequence);
+					
+					
+					publish();
+					// Processing complete and update published
+					currentSequence++;
+				} else {
+					// Missed an inbound sequence number
+					log.severe("Received delta update out of sequence, re-initializing");
+					client.stop();
+					initialize();
+				}
+			} catch (InterruptedException e) {
+				log.severe("Caught InterruptedException while trying to take from inbound queue");
+				e.printStackTrace();
+			} catch (Exception e) {
+				log.severe("Caught exception trying to stop websocket client gracefully: "+e.getMessage());
+				e.printStackTrace();
 			}
+			
+
 		}
+		
+		// finally... dispose of resources gracefully?
 		
 	}
 	
