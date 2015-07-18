@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class RawOrderBookImage {
 	String sequence;
-	String[][] bids; // [ [price, size, num-orders], [price, size, num-orders] ... ]
+	String[][] bids; // [ [price, size, order_id], [price, size, order_id] ... ]
 	String[][] asks;
 	
 	RawOrderBookImage(String sequence, String[][] bids, String[][] asks) {

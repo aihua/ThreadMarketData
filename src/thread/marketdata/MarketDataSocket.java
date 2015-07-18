@@ -47,7 +47,7 @@ public class MarketDataSocket {
     public void onConnect(Session session) {
         this.session = session;
         log.info("Websocket onConnect");
-        ProductSubscription ps = new ProductSubscription(product);
+        RawProductSubscription ps = new RawProductSubscription(product);
         String psString = gson.toJson(ps);
         log.info("About to submit product subscription: "+psString);
         try {

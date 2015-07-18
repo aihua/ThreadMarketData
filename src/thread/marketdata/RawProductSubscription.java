@@ -1,10 +1,10 @@
 package thread.marketdata;
 
-public class ProductSubscription {
+public class RawProductSubscription {
 	String type;
 	String product_id;
 	
-	ProductSubscription(Products.Product p) {
+	RawProductSubscription(Products.Product p) {
 		this.type = "subscribe";
 		this.product_id = p.id;
 	}

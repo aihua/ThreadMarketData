@@ -1,13 +1,16 @@
 package thread.marketdata;
 
+import java.time.Instant;
+
 import thread.marketdata.Products.Product;
 
 public class OrderBook {
 		
 	Product product;
-	Integer timeStampMillis;
+	Instant MarketTime;
+	Instant OrderBookBuilderStartTime;
+	Instant OrderBookBuilderEndTime;
 	Integer sequenceNumber;
-	Boolean isStale;
 	
 	Double BidPrice2;
 	Double BidSize2;
@@ -25,14 +28,15 @@ public class OrderBook {
 	
 	OrderBook(Product product) {
 		this.product = product;
-		isStale = true;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("OrderBook: Product "+product.id);
-		sb.append(" isStale "+isStale.toString());
+		sb.append(" MarketTime "+MarketTime.toString());
+		sb.append(" OrderBookBuilderStartTime "+OrderBookBuilderStartTime.toString());
+		sb.append(" OrderBookBuilderEndTime "+OrderBookBuilderEndTime.toString());
 		sb.append(" sequence number "+sequenceNumber.toString());
 		sb.append(" [Bid2 "+BidPrice2+"x"+BidSize2);
 		sb.append(" Bid1 "+BidPrice1+"x"+BidSize1);
