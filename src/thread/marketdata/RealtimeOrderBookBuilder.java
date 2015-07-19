@@ -223,10 +223,10 @@ public class RealtimeOrderBookBuilder implements Runnable {
 						if (delta.side.equals("buy")) {
 							// Someone wants to buy, so add to bid map (if they paid more it would have traded)
 							// Remember bidMap is price -> (order_id -> order)
-							bidMap.get(price)
+							bidMap.get(price);
 						}
 						publish();
-					} else if (delta.type.equals())
+					}
 					
 					
 					// Processing complete and update published

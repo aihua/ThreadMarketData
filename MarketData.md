@@ -47,8 +47,10 @@ Outstanding questions/issues:
 		* I use Iterators extensively for both inner/outer loops in the OrderBookBuilder, are they OK?
 		* Might a simple index over an array be faster?
 		* Could I at least apply DRY using the Reflection API?
-
-
+* Is JSON fast enough for internal serialization, or should I be using Protobuf?
+	* Protobuf is complicated & needs separate class definition files
+	* Messages are fairly small and infrequent, so it probably doesn't make a diff
+	* Keep it simple for now & upgrade to Protobuf if required later
 
 ^
 |
