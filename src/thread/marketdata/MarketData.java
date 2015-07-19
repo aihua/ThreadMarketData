@@ -19,6 +19,10 @@ public class MarketData {
 				new PeriodicOrderBookBuilder(Exchange.PRODUCTION, p.products.get(0), queue),"OrderBookBuilderThread");
 		OrderBookBuilderThread.start();
 
+		Thread ZeroMQPublisherThread = new Thread(
+				new ZeroMQPublisher(queue), "ZeroMQPublisherThread");
+		ZeroMQPublisherThread.start();
+		
 
 	}
 

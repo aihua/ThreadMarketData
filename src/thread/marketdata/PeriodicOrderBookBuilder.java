@@ -47,7 +47,7 @@ public class PeriodicOrderBookBuilder implements Runnable {
 				MarketTime = Instant.now(); // estimate... not provided in REST
 			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 				image = gson.fromJson(in.readLine(), RawOrderBookImage.class);
-				log.info("Got order book image with sequence number "+image.sequence);
+				log.finest("Got order book image with sequence number "+image.sequence);
 			} catch (Exception e) {
 				log.severe("Error when polling order book image: "+e.getMessage());
 				e.printStackTrace();
@@ -100,6 +100,7 @@ public class PeriodicOrderBookBuilder implements Runnable {
 			try {
 				Thread.sleep(PAUSETIME);
 			} catch (InterruptedException e) {
+				log.severe("Interrupted while pausing PeriodicOrderBookBuilder: "+e.getMessage());
 				e.printStackTrace();
 			}
 		}

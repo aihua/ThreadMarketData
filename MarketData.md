@@ -14,22 +14,22 @@ A. OrderBookBuilder thread
 	6. After play back is complete, apply real-time stream messages as they arrive.
 	7. Emit immutable OrderBook messages over a second BlockingQueue to the Zero MQ publisher thread.
 B. Zero MQ Publisher thread
-	1. Serialize incoming OrderBook message
-	2. Publish on PUB "socket"
+	1. Serialize incoming OrderBook message to JSON
+	2. Publish on ZeroMQ PUB "socket"
 
 Outstanding questions/issues:
 
 * Can I do without a full, real-time order book in the short term?
-	* Just poll once a minute or something
+	* Just poll once every few seconds or something
 	* Would be enough for low-resolution algos O(days)
 	* Would significantly simplify the logic
 	* Would be drop-in replaceable for Bitstamp
-* For RealtimeOrderBookBuilder
+* RealtimeOrderBookBuilder has "issues"
 	* Will Integer x == Integer y work the way I think or do I need to use .equals()?
 		* Only if x, y are between -128 and 127 (!!!)
 		* https://www.owasp.org/index.php/Java_gotchas#Immutable_Objects_.2F_Wrapper_Class_Caching
 		* ...but I look up objects in the TreeMap using Doubles...
-		* ...but I pass them by reference...
+		* ...but I pass them by reference... - seems to work for the simpler implementation
 		* Probably depends on the precise implementation of TreeMap.containsKey() - does it do .equals() or == ?
 	* How do we effectively test the order book algorithm to make sure it works properly?
 		* Record a stream of JSON updates in text and build a test framework to check deltas sum up to image
@@ -47,9 +47,7 @@ Outstanding questions/issues:
 		* I use Iterators extensively for both inner/outer loops in the OrderBookBuilder, are they OK?
 		* Might a simple index over an array be faster?
 		* Could I at least apply DRY using the Reflection API?
-* Can the code be extensible enough to plan for use on e.g. Bitstamp straight away?
-	* Don't over-design/over-abstract up front
-	* Maybe just fork the code at that point?
+
 
 
 ^
