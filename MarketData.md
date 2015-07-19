@@ -17,7 +17,14 @@ B. Zero MQ Publisher thread
 	1. Serialize incoming OrderBook message to JSON
 	2. Publish on ZeroMQ PUB "socket"
 
-Outstanding questions/issues:
+To Do:
+
+* (Possibly) Complete real-time Coinbase websocket subscription
+* Extend to Bitstamp, or whatever the next largest US exchange is (look at distribution by volume)
+* Select exchange/environment and pub/sub IP, port using properties file
+* Build test cases - I really ought to do this before I rely on it financially
+
+Issues/Risks:
 
 * Can I do without a full, real-time order book in the short term?
 	* Just poll once every few seconds or something
