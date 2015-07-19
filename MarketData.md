@@ -14,7 +14,8 @@ A. OrderBookBuilder thread
 	6. After play back is complete, apply real-time stream messages as they arrive.
 	7. Emit immutable OrderBook messages over a second BlockingQueue to the Zero MQ publisher thread.
 B. Zero MQ Publisher thread
-	1. 
+	1. Serialize incoming OrderBook message
+	2. Publish on PUB "socket"
 
 Outstanding questions/issues:
 
@@ -42,13 +43,14 @@ Outstanding questions/issues:
 		* Dropped updates in the OrderBookBuilder thread are fatal & need resync
 		* But we should plan for slow consumers downstream
 		* Is this something I have to deal with straight away?
+	* Summing over the orders is obviously performance-critical
+		* I use Iterators extensively for both inner/outer loops in the OrderBookBuilder, are they OK?
+		* Might a simple index over an array be faster?
+		* Could I at least apply DRY using the Reflection API?
 * Can the code be extensible enough to plan for use on e.g. Bitstamp straight away?
 	* Don't over-design/over-abstract up front
 	* Maybe just fork the code at that point?
-* Summing over the orders is obviously performance-critical
-	* I use Iterators extensively for both inner/outer loops in the OrderBookBuilder, are they OK?
-	* Might a simple index over an array be faster?
-	* Could I at least apply DRY using the Reflection API?
+
 
 ^
 |

@@ -3,7 +3,9 @@ package thread.marketdata;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -12,8 +14,8 @@ import com.google.gson.Gson;
 
 public class PeriodicOrderBookBuilder implements Runnable {
 	
-	/* Start Time to End Time <= 1 ms on Macbook Pro, July 2015.
-	 * 
+	/* Generates outbound order books in about 1 ms on Macbook Pro, July 2015.
+	 * Uses TreeMap<Double, Double> (price -> size) for internal representation
 	 */
 	
 	final static Integer PAUSETIME = 5000;
@@ -51,8 +53,9 @@ public class PeriodicOrderBookBuilder implements Runnable {
 				e.printStackTrace();
 			}
 			OrderBook ob = new OrderBook(product);
-			ob.MarketTime = MarketTime;
+			// Time-stamp start and populate TreeMaps
 			ob.OrderBookBuilderStartTime = Instant.now();
+			ob.MarketTime = MarketTime;
 			currentSequence = Integer.parseInt(image.sequence);
 			ob.sequenceNumber = currentSequence;
 			bidMap = new TreeMap<Double, Double>();
@@ -72,9 +75,28 @@ public class PeriodicOrderBookBuilder implements Runnable {
 				// Ignore num-orders
 				askMap.put(price, size);
 			}
+			Iterator<Double> priceIterator;
+			priceIterator = bidMap.descendingKeySet().iterator();
+			ob.BidPrice0 = priceIterator.next();
+			ob.BidSize0 = bidMap.get(ob.BidPrice0);
+			ob.BidPrice1 = priceIterator.next();
+			ob.BidSize1 = bidMap.get(ob.BidPrice1);
+			ob.BidPrice2 = priceIterator.next();
+			ob.BidSize2 = bidMap.get(ob.BidPrice2);
+			priceIterator = askMap.keySet().iterator();
+			ob.AskPrice0 = priceIterator.next();
+			ob.AskSize0 = askMap.get(ob.AskPrice0);
+			ob.AskPrice1 = priceIterator.next();
+			ob.AskSize1 = askMap.get(ob.AskPrice1);
+			ob.AskPrice2 = priceIterator.next();
+			ob.AskSize2 = askMap.get(ob.AskPrice2);
+			// Timestamp end and send
 			ob.OrderBookBuilderEndTime = Instant.now();
 			outboundQueue.add(ob);
-			log.info("Outbound: "+ob.toString());
+			log.info("Outbound order book "+ob.sequenceNumber+" [market->gwy "
+					+Duration.between(ob.MarketTime, ob.OrderBookBuilderStartTime).toMillis()+" ms] [gwy processing "
+					+Duration.between(ob.OrderBookBuilderStartTime, ob.OrderBookBuilderEndTime).toMillis()+" ms]");
+			
 			try {
 				Thread.sleep(PAUSETIME);
 			} catch (InterruptedException e) {
