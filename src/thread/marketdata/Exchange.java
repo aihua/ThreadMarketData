@@ -8,9 +8,9 @@ public enum Exchange {
 			"https://api.exchange.coinbase.com",
 			"wss://ws-feed.exchange.coinbase.com");
 	
-	final String website;
-	final String API;
-	final String websocket;
+	public final String website;
+	public final String API;
+	public final String websocket;
 	
 	Exchange (String website, String API, String websocket) {
 		this.website = website;

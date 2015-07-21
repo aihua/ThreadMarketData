@@ -19,9 +19,9 @@ public class Products {
 	final Type collectionType = new TypeToken<ArrayList<Product>>(){}.getType();
 	
 	Exchange exchange;
-	ArrayList<Product> products;
+	private ArrayList<Product> products;
 
-	Products(Exchange exchange) {
+	public Products(Exchange exchange) {
 		this.exchange = exchange;
 		try {
 			URL url = new URL(exchange.API + "/products");
@@ -33,12 +33,12 @@ public class Products {
 		}
 	}
 
-	ArrayList<Product> getProducts() {
+	public ArrayList<Product> getProducts() {
 		return products;
 	}
 	
-	class Product {
-		String id;
+	public class Product {
+		public String id;
 		String base_currency;
 		String quote_currency;
 		Double base_min_size;

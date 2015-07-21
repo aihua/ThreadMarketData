@@ -16,7 +16,7 @@ public class MarketData {
 		LinkedBlockingQueue<OrderBook> queue = new LinkedBlockingQueue<OrderBook>();
 		
 		Thread OrderBookBuilderThread = new Thread(
-				new PeriodicOrderBookBuilder(Exchange.PRODUCTION, p.products.get(0), queue),"OrderBookBuilderThread");
+				new PeriodicOrderBookBuilder(Exchange.PRODUCTION, p.getProducts().get(0), queue),"OrderBookBuilderThread");
 		OrderBookBuilderThread.start();
 
 		Thread ZeroMQPublisherThread = new Thread(

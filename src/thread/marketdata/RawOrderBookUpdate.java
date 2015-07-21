@@ -4,7 +4,7 @@ public class RawOrderBookUpdate {
 	String type;
 	String time;
 	String product_id;
-	String sequence;
+	public String sequence;
 	String order_id;
 	String side;
 	String order_type;
