@@ -84,7 +84,7 @@ public class RealtimeDataCapture {
 				// Open output file
 				PrintWriter out = null;
 				try {
-					FileWriter fw = new FileWriter("/Users/nick/Dev/Data/Coinbase-webservice-images.txt");
+					FileWriter fw = new FileWriter("/Users/nick/Dev/Data/Coinbase-L2-webservice-images.txt");
 					out = new PrintWriter(fw);
 					log.info("Opened output file for webservice images");
 				} catch (Exception e) {
@@ -110,6 +110,41 @@ public class RealtimeDataCapture {
 		};
 		t2.start();
 			
+		Thread t3 = new Thread() {
+			public void run() {
+				Instant startTime = Instant.now();
+				Products p = new Products(Exchange.PRODUCTION);
+				Products.Product product = p.getProducts().get(0);
+				
+				// Open output file
+				PrintWriter out = null;
+				try {
+					FileWriter fw = new FileWriter("/Users/nick/Dev/Data/Coinbase-L3-webservice-images.txt");
+					out = new PrintWriter(fw);
+					log.info("Opened output file for webservice images");
+				} catch (Exception e) {
+					log.severe("Failed to open file for writing: "+e.getMessage());
+					e.printStackTrace();
+				}
+		
+				while (! Thread.currentThread().isInterrupted()) {
+					try {
+						URL url = new URL(Exchange.PRODUCTION.API + "/products/" + product.id + "/book?level=3");
+						Instant timestamp = Instant.now(); // estimate... not provided in REST
+					    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+						String msg = in.readLine();
+						out.println(Duration.between(startTime, timestamp).toMillis()+"\t"+msg);
+						Thread.sleep(30000);
+						
+					} catch (Exception e) {
+						log.severe("Error when polling order book image: "+e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		t3.start();
+		
 	}
 
 }
