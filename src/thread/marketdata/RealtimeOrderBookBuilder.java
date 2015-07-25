@@ -31,7 +31,6 @@ public class RealtimeOrderBookBuilder implements Runnable {
 	MarketDataSocket socket;
 	Exchange exchange;
 	Products.Product product;
-	Boolean replayFromFile;
 	
 	private TreeMap<Double, TreeMap<String, Order>> bidMap; // price -> (order_id -> order)
 	private TreeMap<Double, TreeMap<String, Order>> askMap;
@@ -39,11 +38,10 @@ public class RealtimeOrderBookBuilder implements Runnable {
 	private Instant MarketTime;
 	
 	RealtimeOrderBookBuilder(Exchange exchange, Products.Product product, 
-			LinkedBlockingQueue<OrderBook> outboundQueue, Boolean replayFromFile) {		
+			LinkedBlockingQueue<OrderBook> outboundQueue) {		
 		this.exchange = exchange;
 		this.product = product;
 		this.outboundQueue = outboundQueue;
-		this.replayFromFile = replayFromFile;
 	}
 	
 	void initialize() {
@@ -55,7 +53,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 
 		// Start real-time subscription	filling queue	
 		log.info("Starting real time subscription");
-		if (! replayFromFile) {
+		if (! exchange.equals(Exchange.REPLAY)) {
 			client = new WebSocketClient(new SslContextFactory());
 			socket = new MarketDataSocket(product, inboundQueue);
 			try {
@@ -85,9 +83,9 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		
 		// Get initial order book image from REST and populate bid/ask maps
 		log.info("Getting initial order book image");
-		if (! replayFromFile) {
+		if (! exchange.equals(Exchange.REPLAY)) {
 			try {
-				URL url = new URL(exchange.API + "/products/" + product.id + "/book?level=3");
+				URL url = new URL(exchange.level3orderbook);
 				MarketTime = Instant.now(); // estimate... not provided in REST
 			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 				initialImage = gson.fromJson(in.readLine(), RawOrderBookImage.class);
@@ -98,7 +96,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 			}
 		} else {
 			try {
-				BufferedReader in = new BufferedReader(new FileReader("/Users/nick/Dev/Data/Coinbase-L3-webservice-images.txt"));
+				BufferedReader in = new BufferedReader(new FileReader(exchange.level3orderbook));
 				String[] array = in.readLine().split("\t");
 				String msg = array[1]; // ignore time-stamp for now
 				initialImage = gson.fromJson(msg, RawOrderBookImage.class);

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import com.google.gson.Gson;
 
+import thread.marketdata.Exchange;
 import thread.marketdata.Products;
 import thread.marketdata.RawOrderBookUpdate;
 
@@ -19,6 +20,7 @@ public class DataReplaySocket implements Runnable {
 	
 	final static Logger log = Logger.getLogger("thread.marketdata.DataReplaySocket");
 
+	Exchange exchange;
     Products.Product product;
     Queue<RawOrderBookUpdate> queue;
     Instant startTime;
@@ -27,13 +29,17 @@ public class DataReplaySocket implements Runnable {
     String line;
     Gson gson;
 	
-	public DataReplaySocket(Products.Product product, Queue<RawOrderBookUpdate> queue) {
+	public DataReplaySocket(Exchange exchange, Products.Product product, Queue<RawOrderBookUpdate> queue) {
 		log.info("Initializing DataReplaySocket");
+		if (! exchange.equals(Exchange.REPLAY)) {
+			log.severe("Trying to replay data from a non-REPLAY Exchange!");
+		}
 		gson = new Gson();
+		this.exchange = exchange;
 		this.product = product;
 		this.queue = queue;
 		try {
-			fr = new FileReader("/Users/nick/Dev/Data/Coinbase-websocket-updates.txt");
+			fr = new FileReader(exchange.websocket);
 		} catch (FileNotFoundException e) {
 			log.severe("Can't open file for reading: "+e.getMessage());
 			e.printStackTrace();

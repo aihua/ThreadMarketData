@@ -1,6 +1,9 @@
 package thread.marketdata;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.Duration;
@@ -15,7 +18,10 @@ import com.google.gson.Gson;
 public class PeriodicOrderBookBuilder implements Runnable {
 	
 	/* Generates outbound order books in about 1 ms on Macbook Pro, July 2015.
-	 * Uses TreeMap<Double, Double> (price -> size) for internal representation
+	 * Uses TreeMap<Double, Double> (price -> size) for internal representation.
+	 * 
+	 * In REPLAY mode, uses the time-stamps in the recorded file.
+	 * In regular mode, waits for PAUSETIME between publications.
 	 */
 	
 	final static Integer PAUSETIME = 5000;
@@ -29,6 +35,8 @@ public class PeriodicOrderBookBuilder implements Runnable {
 	Products.Product product;
 	TreeMap<Double, Double> bidMap;
 	TreeMap<Double, Double> askMap;
+	Instant startTime;
+	BufferedReader in;
 	
 	private Integer currentSequence;
 	private Instant MarketTime;
@@ -37,20 +45,54 @@ public class PeriodicOrderBookBuilder implements Runnable {
 		this.exchange = exchange;
 		this.product = product;
 		this.outboundQueue = outboundQueue;
+		startTime = Instant.now();
 	}
 	
 	public void run() {
-		while (! Thread.currentThread().isInterrupted()) {
-			// Get order book image from REST and Java-ify
+		if (exchange.equals(Exchange.REPLAY)) {
+			// Only needs one-time initialization if reading from file
 			try {
-				URL url = new URL(exchange.API + "/products/" + product.id + "/book?level=2");
-				MarketTime = Instant.now(); // estimate... not provided in REST
-			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-				image = gson.fromJson(in.readLine(), RawOrderBookImage.class);
-				log.finest("Got order book image with sequence number "+image.sequence);
-			} catch (Exception e) {
-				log.severe("Error when polling order book image: "+e.getMessage());
+				in = new BufferedReader(new FileReader(exchange.level2orderbook));
+				log.info("Opened L2 Order Book file for reading: "+exchange.level2orderbook);
+			} catch (FileNotFoundException e) {
+				log.severe("Failed to open Level 2 order book from file: "+e.getMessage());
 				e.printStackTrace();
+			}
+		}
+		
+		while (! Thread.interrupted()) {
+			// Main loop: get order book image and interpret
+			if (! exchange.equals(Exchange.REPLAY)) {
+				try {
+					URL url = new URL(exchange.level2orderbook);
+					MarketTime = Instant.now(); // estimate... not provided in REST
+				    in = new BufferedReader(new InputStreamReader(url.openStream()));
+					image = gson.fromJson(in.readLine(), RawOrderBookImage.class);
+					log.finest("Got order book image with sequence number "+image.sequence);
+				} catch (Exception e) {
+					log.severe("Error when polling order book image: "+e.getMessage());
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					// TODO: This readLine() is going to fail when it gets to the end of the file
+					String[] array = in.readLine().split("\t");
+					String timeString = array[0];
+					String msg = array[1];
+
+					Long currentElapsed = Duration.between(startTime, Instant.now()).toMillis();
+					Long targetElapsed = Long.parseLong(timeString);
+					if (currentElapsed < targetElapsed){
+						Thread.sleep(targetElapsed - currentElapsed);
+					}
+					MarketTime = Instant.now(); // synthetic time, lined up with expectations
+					image = gson.fromJson(msg, RawOrderBookImage.class);
+					log.finest("Got order book image with sequence number "+image.sequence);
+					
+				} catch (Exception e) {
+					log.severe("Error when polling order book image: "+e.getMessage());
+					e.printStackTrace();
+				}
 			}
 			OrderBook ob = new OrderBook(product);
 			// Time-stamp start and populate TreeMaps
@@ -97,16 +139,24 @@ public class PeriodicOrderBookBuilder implements Runnable {
 					+Duration.between(ob.MarketTime, ob.OrderBookBuilderStartTime).toMillis()+" ms] [gwy processing "
 					+Duration.between(ob.OrderBookBuilderStartTime, ob.OrderBookBuilderEndTime).toMillis()+" ms]");
 			
-			try {
-				Thread.sleep(PAUSETIME);
-			} catch (InterruptedException e) {
-				log.severe("Interrupted while pausing PeriodicOrderBookBuilder: "+e.getMessage());
-				e.printStackTrace();
+			if (! exchange.equals(Exchange.REPLAY)) {
+				// Only pause if running from a live server
+				try {
+					Thread.sleep(PAUSETIME);
+				} catch (InterruptedException e) {
+					log.severe("Interrupted while pausing PeriodicOrderBookBuilder: "+e.getMessage());
+					e.printStackTrace();
+				}
 			}
 		}
 		
-		// finally... dispose of resources gracefully?
-		
+		// finally... dispose of resources gracefully
+		try {
+			in.close();
+		} catch (IOException e) {
+			log.severe("Failed to close BufferedReader: "+e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 }

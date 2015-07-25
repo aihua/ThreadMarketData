@@ -22,11 +22,11 @@ public class Products {
 	Exchange exchange;
 	private ArrayList<Product> products;
 
-	public Products(Exchange exchange, Boolean replayFromFile) {
+	public Products(Exchange exchange) {
 		this.exchange = exchange;
-		if (! replayFromFile) {
+		if (! exchange.equals(Exchange.REPLAY)) {
 			try {
-				URL url = new URL(exchange.API + "/products");
+				URL url = new URL(exchange.products);
 			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 				this.products = gson.fromJson(in.readLine(), collectionType);
 				in.close();
@@ -36,7 +36,7 @@ public class Products {
 			}
 		} else {
 			try {
-				BufferedReader in = new BufferedReader(new FileReader("/Users/nick/Dev/Data/Coinbase-products.txt"));
+				BufferedReader in = new BufferedReader(new FileReader(exchange.products));
 				this.products = gson.fromJson(in.readLine(), collectionType);
 				in.close();
 			} catch (Exception e) {
