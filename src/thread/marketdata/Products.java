@@ -1,6 +1,7 @@
 package thread.marketdata;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,15 +22,27 @@ public class Products {
 	Exchange exchange;
 	private ArrayList<Product> products;
 
-	public Products(Exchange exchange) {
+	public Products(Exchange exchange, Boolean replayFromFile) {
 		this.exchange = exchange;
-		try {
-			URL url = new URL(exchange.API + "/products");
-		    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-			this.products = gson.fromJson(in.readLine(), collectionType);
-		} catch (Exception e) {
-			log.severe("Error getting products from exchange: "+e.getMessage());
-			e.printStackTrace();
+		if (! replayFromFile) {
+			try {
+				URL url = new URL(exchange.API + "/products");
+			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+				this.products = gson.fromJson(in.readLine(), collectionType);
+				in.close();
+			} catch (Exception e) {
+				log.severe("Error getting products from exchange: "+e.getMessage());
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				BufferedReader in = new BufferedReader(new FileReader("/Users/nick/Dev/Data/Coinbase-products.txt"));
+				this.products = gson.fromJson(in.readLine(), collectionType);
+				in.close();
+			} catch (Exception e) {
+				log.severe("Caught error reading from products file: "+e.getMessage());
+				e.printStackTrace();
+			}
 		}
 	}
 

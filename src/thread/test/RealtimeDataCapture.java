@@ -29,7 +29,7 @@ public class RealtimeDataCapture {
 		Thread t1 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION);
+				Products p = new Products(Exchange.PRODUCTION, false); // don't re-record to a file
 				LinkedBlockingQueue<String> inboundQueue = new LinkedBlockingQueue<String>();
 
 				// Open output file
@@ -78,7 +78,7 @@ public class RealtimeDataCapture {
 		Thread t2 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION);
+				Products p = new Products(Exchange.PRODUCTION, false);
 				Products.Product product = p.getProducts().get(0);
 				
 				// Open output file
@@ -113,7 +113,7 @@ public class RealtimeDataCapture {
 		Thread t3 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION);
+				Products p = new Products(Exchange.PRODUCTION, false);
 				Products.Product product = p.getProducts().get(0);
 				
 				// Open output file

@@ -19,6 +19,7 @@ B. Zero MQ Publisher thread
 
 To Do:
 
+* Build test harness for market data using recorded stuff
 * (Possibly) Complete real-time Coinbase websocket subscription
 * Extend to Bitstamp, or whatever the next largest US exchange is (look at distribution by volume)
 * Select exchange/environment and pub/sub IP, port using properties file
@@ -67,3 +68,8 @@ Issues/Risks:
 | C	
 | E 	Bids: I can sell (i.e. what people bid)
 |
+
+Recorded data:
+
+* L3 web socket updates need to start first, at sequence 157,866,615 (if re-recording beware this)
+* L3 web service images start afterwards at sequence 157,866,848

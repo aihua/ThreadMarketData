@@ -1,6 +1,7 @@
 package thread.marketdata;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
@@ -30,16 +31,19 @@ public class RealtimeOrderBookBuilder implements Runnable {
 	MarketDataSocket socket;
 	Exchange exchange;
 	Products.Product product;
+	Boolean replayFromFile;
 	
 	private TreeMap<Double, TreeMap<String, Order>> bidMap; // price -> (order_id -> order)
 	private TreeMap<Double, TreeMap<String, Order>> askMap;
 	private Integer currentSequence;
 	private Instant MarketTime;
 	
-	RealtimeOrderBookBuilder(Exchange exchange, Products.Product product, LinkedBlockingQueue<OrderBook> outboundQueue) {		
+	RealtimeOrderBookBuilder(Exchange exchange, Products.Product product, 
+			LinkedBlockingQueue<OrderBook> outboundQueue, Boolean replayFromFile) {		
 		this.exchange = exchange;
 		this.product = product;
 		this.outboundQueue = outboundQueue;
+		this.replayFromFile = replayFromFile;
 	}
 	
 	void initialize() {
@@ -51,17 +55,22 @@ public class RealtimeOrderBookBuilder implements Runnable {
 
 		// Start real-time subscription	filling queue	
 		log.info("Starting real time subscription");
-		client = new WebSocketClient(new SslContextFactory());
-		socket = new MarketDataSocket(product, inboundQueue);
-		try {
-			client.start();
-			URI uri = new URI(exchange.websocket);
-			log.info("Connecting to:"+uri.toString());
-			ClientUpgradeRequest request = new ClientUpgradeRequest();
-			client.connect(socket, uri, request);
-		} catch (Exception e) {
-			log.severe("Caught exception opening websocket: "+e.getMessage());
-			e.printStackTrace();
+		if (! replayFromFile) {
+			client = new WebSocketClient(new SslContextFactory());
+			socket = new MarketDataSocket(product, inboundQueue);
+			try {
+				client.start();
+				URI uri = new URI(exchange.websocket);
+				log.info("Connecting to:"+uri.toString());
+				ClientUpgradeRequest request = new ClientUpgradeRequest();
+				client.connect(socket, uri, request);
+			} catch (Exception e) {
+				log.severe("Caught exception opening websocket: "+e.getMessage());
+				e.printStackTrace();
+			}
+		} else {
+			Thread t1 = new Thread(new thread.test.DataReplaySocket(product, inboundQueue), "DataReplaySocket");
+			t1.start();
 		}
 		
 		// Wait for first update to come through
@@ -76,15 +85,29 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		
 		// Get initial order book image from REST and populate bid/ask maps
 		log.info("Getting initial order book image");
-		try {
-			URL url = new URL(exchange.API + "/products/" + product.id + "/book?level=3");
-			MarketTime = Instant.now(); // estimate... not provided in REST
-		    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-			initialImage = gson.fromJson(in.readLine(), RawOrderBookImage.class);
-			log.info("Got initial order book image with sequence number "+initialImage.sequence);
-		} catch (Exception e) {
-			log.severe("Error when polling order book image: "+e.getMessage());
-			e.printStackTrace();
+		if (! replayFromFile) {
+			try {
+				URL url = new URL(exchange.API + "/products/" + product.id + "/book?level=3");
+				MarketTime = Instant.now(); // estimate... not provided in REST
+			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+				initialImage = gson.fromJson(in.readLine(), RawOrderBookImage.class);
+				log.info("Got initial order book image with sequence number "+initialImage.sequence);
+			} catch (Exception e) {
+				log.severe("Error when polling order book image: "+e.getMessage());
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				BufferedReader in = new BufferedReader(new FileReader("/Users/nick/Dev/Data/Coinbase-L3-webservice-images.txt"));
+				String[] array = in.readLine().split("\t");
+				String msg = array[1]; // ignore time-stamp for now
+				initialImage = gson.fromJson(msg, RawOrderBookImage.class);
+				log.info("Got initial order book image with sequence number "+initialImage.sequence);
+				in.close();
+			} catch (Exception e) {
+				log.severe("Error when reading initial order book image from file: "+e.getMessage());
+				e.printStackTrace();
+			}
 		}
 		currentSequence = Integer.parseInt(initialImage.sequence);
 		for (String[] array: initialImage.bids) {
