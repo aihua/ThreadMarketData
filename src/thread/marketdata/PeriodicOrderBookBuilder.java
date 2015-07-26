@@ -20,8 +20,8 @@ public class PeriodicOrderBookBuilder implements Runnable {
 	/* Generates outbound order books in about 1 ms on Macbook Pro, July 2015.
 	 * Uses TreeMap<Double, Double> (price -> size) for internal representation.
 	 * 
-	 * In REPLAY mode, uses the time-stamps in the recorded file.
 	 * In regular mode, waits for PAUSETIME between publications.
+	 * In replay mode, uses the time-stamps in the recorded file.
 	 */
 	
 	final static Integer PAUSETIME = 5000;
@@ -132,7 +132,7 @@ public class PeriodicOrderBookBuilder implements Runnable {
 			ob.AskSize1 = askMap.get(ob.AskPrice1);
 			ob.AskPrice2 = priceIterator.next();
 			ob.AskSize2 = askMap.get(ob.AskPrice2);
-			// Timestamp end and send
+			// Time-stamp end and send
 			ob.OrderBookBuilderEndTime = Instant.now();
 			outboundQueue.add(ob);
 			log.info("Outbound order book "+ob.sequenceNumber+" [market->gwy "

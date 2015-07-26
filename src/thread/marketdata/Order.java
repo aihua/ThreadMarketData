@@ -28,7 +28,7 @@ public class Order {
 	
 	Order(OrderType type, Instant time, String product_id, Integer sequence, String order_id, String side,
 			Double size, Double price, String funds) {
-		// Used for creation from webservice delta
+		// (possibly) used for creation from web service delta
 		this.type = type;
 		this.time = time;
 		this.product_id = product_id;
@@ -38,5 +38,22 @@ public class Order {
 		this.size = size;
 		this.price = price;
 		this.funds = funds;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("[");
+		if (type != null) {sb.append("type "+type+", ");}
+		if (time != null) {sb.append("time "+time.toString()+", ");}
+		if (product_id != null) {sb.append("product_id "+product_id+", ");}
+		if (sequence != null) {sb.append("sequence "+sequence+", ");}
+		if (order_id != null) {sb.append("order_id "+order_id+", ");}
+		if (side != null) {sb.append("side "+side+", ");}
+		if (size != null) {sb.append("size "+size+", ");}
+		if (price != null) {sb.append("price "+price+", ");}
+		if (funds != null) {sb.append("funds "+funds);}
+		sb.append("]");
+		return sb.toString();
 	}
 }

@@ -19,6 +19,8 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import com.google.gson.Gson;
 
+import thread.test.DataReplaySocket;
+
 public class RealtimeOrderBookBuilder implements Runnable {
 	
 	final Logger log = Logger.getLogger("thread.marketdata.RealtimeOrderBookBuilder");
@@ -67,7 +69,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 				e.printStackTrace();
 			}
 		} else {
-			Thread t1 = new Thread(new thread.test.DataReplaySocket(product, inboundQueue), "DataReplaySocket");
+			Thread t1 = new Thread(new DataReplaySocket(exchange, product, inboundQueue), "DataReplaySocket");
 			t1.start();
 		}
 		
@@ -77,7 +79,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 			RawOrderBookUpdate ignored = inboundQueue.take();
 			log.info("OrderBookBuilder received and ignored first delta update, sequence "+ignored.sequence);
 		} catch (InterruptedException e1) {
-			log.severe("Interrupted while waiting for first inbound market data update");
+			log.severe("Interrupted while waiting for first inbound market data update: "+e1.getMessage());
 			e1.printStackTrace();
 		}
 		
@@ -113,30 +115,13 @@ public class RealtimeOrderBookBuilder implements Runnable {
 			Double price = Double.parseDouble(array[0]);
 			Double size = Double.parseDouble(array[1]);
 			String order_id = array[2];
-			if (bidMap.containsKey(price)) {
-				TreeMap<String, Order> ordersAtLevel = bidMap.get(price);
-				// Don't need to check if order already exists: will only appear once in initial snapshot
-				ordersAtLevel.put(order_id, new Order(price, size, order_id));
-			} else {
-				TreeMap<String, Order> ordersAtLevel = new TreeMap<String, Order>();
-				ordersAtLevel.put(order_id, new Order(price, size, order_id));
-				bidMap.put(price, ordersAtLevel);
-			}
-			log.finest("Putting order "+order_id+" for "+price.toString()+"x"+size.toString()+" into bid map");
+			addToMap(bidMap, new Order(price, size, order_id));
 		}
 		for (String[] array: initialImage.asks) {
 			Double price = Double.parseDouble(array[0]);
 			Double size = Double.parseDouble(array[1]);
 			String order_id = array[2];
-			if (askMap.containsKey(price)) {
-				TreeMap<String, Order> ordersAtLevel = askMap.get(price);
-				ordersAtLevel.put(order_id, new Order(price, size, order_id));
-			} else {
-				TreeMap<String, Order> ordersAtLevel = new TreeMap<String, Order>();
-				ordersAtLevel.put(order_id, new Order(price, size, order_id));
-				askMap.put(price, ordersAtLevel);
-			}
-			log.finest("Putting order "+order_id+" for "+price.toString()+"x"+size.toString()+" into ask map");
+			addToMap(askMap, new Order(price, size, order_id));
 		}
 		publish();
 		log.info("Completed initialization and published first update");
@@ -155,6 +140,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		Iterator<String> orderIterator;
 		// Bid0
 		ob.BidPrice0 = priceIterator.next();
+		ob.BidSize0 = 0.0;
 		ordersAtLevel = bidMap.get(ob.BidPrice0);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -164,6 +150,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		}
 		// Bid1
 		ob.BidPrice1 = priceIterator.next();
+		ob.BidSize1 = 0.0;
 		ordersAtLevel = bidMap.get(ob.BidPrice1);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -173,6 +160,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		}
 		// Bid2
 		ob.BidPrice2 = priceIterator.next();
+		ob.BidSize2 = 0.0;
 		ordersAtLevel = bidMap.get(ob.BidPrice2);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -183,6 +171,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		priceIterator = askMap.keySet().iterator();
 		// Ask0
 		ob.AskPrice0 = priceIterator.next();
+		ob.AskSize0 = 0.0;
 		ordersAtLevel = askMap.get(ob.AskPrice0);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -192,6 +181,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		}
 		// Ask1
 		ob.AskPrice1 = priceIterator.next();
+		ob.AskSize1 = 0.0;
 		ordersAtLevel = askMap.get(ob.AskPrice1);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -201,6 +191,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		}
 		// Ask2
 		ob.AskPrice2 = priceIterator.next();
+		ob.AskSize2 = 0.0;
 		ordersAtLevel = askMap.get(ob.AskPrice2);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
@@ -223,15 +214,19 @@ public class RealtimeOrderBookBuilder implements Runnable {
 				delta = inboundQueue.take();
 				if (Integer.parseInt(delta.sequence) <= currentSequence) {
 					// Ignore: before our REST snapshot
-					log.info("Ignoring delta "+delta.sequence+" as it's before our snapshot");
+					log.fine("Ignoring delta "+delta.sequence+" as it's before our snapshot");
 				} else if ((Integer.parseInt(delta.sequence) == (currentSequence + 1)) 
 						&& (delta.product_id.equals(product.id))) {
 					// Delta is next in sequence and for correct product: update bid/ask maps
-					log.info("Processing delta "+delta.sequence);
+					log.fine("Processing delta "+delta.sequence);
 					if (delta.type.equals("received")) {
 						// An order was received by the matching engine
 						// Ignore for now: but we may want to do something with this later for our own orders
+						currentSequence++;
+						publish();
 					} else if (delta.type.equals("open")) {
+						// We can safely ignore market (funds) orders, because they trade immediately by definition
+	
 						// Add remaining_size to outstanding size on the book
 						MarketTime = Instant.parse(delta.time);
 						currentSequence = Integer.parseInt(delta.sequence);
@@ -239,22 +234,66 @@ public class RealtimeOrderBookBuilder implements Runnable {
 						Double size = Double.parseDouble(delta.remaining_size);
 						/* Order(String type, Instant time, String product_id, Integer sequence, String order_id, String side,
 							Double size, Double price, String funds) */
-						Order ord = new Order(Order.OrderType.LIMIT, MarketTime, product.id, currentSequence, delta.side,
-								delta.order_id, size, price, delta.funds);
+						Order ord = new Order(Order.OrderType.LIMIT, MarketTime, product.id, currentSequence, 
+								delta.order_id, delta.side, size, price, delta.funds);
 						if (delta.side.equals("buy")) {
 							// Someone wants to buy, so add to bid map (if they paid more it would have traded)
 							// Remember bidMap is price -> (order_id -> order)
-							bidMap.get(price);
+							addToMap(bidMap, ord);
+						} else if (delta.side.equals("sell")) {
+							addToMap(askMap, ord);
 						}
 						publish();
+					} else if (delta.type.equals("done")) {
+						MarketTime = Instant.parse(delta.time);
+						currentSequence = Integer.parseInt(delta.sequence);
+						Double price = Double.parseDouble(delta.price);
+						if (delta.side.equals("buy")) {
+							removeFromMap(bidMap, price, delta.order_id);
+						} else if (delta.side.equals("sell")) {
+							removeFromMap(askMap, price, delta.order_id);
+						}
+						publish();
+					} else if (delta.type.equals("match")) {
+						// Two orders matched, includes distinction of maker/taker
+						// Ignore for now (both orders will be "done" anyway) but may be useful later
+						currentSequence++;
+						publish();
+					} else if (delta.type.equals("change")) {
+						// Change messages for received, but not yet open, messages can be ignored
+						// (caused by self-trade prevention).  This includes by definition all funds messages.
+						// Only size can change; it can only go down.
+						MarketTime = Instant.parse(delta.time);
+						currentSequence = Integer.parseInt(delta.sequence);
+						Double price = Double.parseDouble(delta.price);
+						if (bidMap.containsKey(price)) { // I think this protects me from a NPE
+							// Bit weird I don't have to check side?
+							TreeMap<String, Order> ordersAtLevel = bidMap.get(price);
+							if (ordersAtLevel.containsKey(delta.order_id)) {
+								// It's on the book; it must be a resting limit order
+								Order order = ordersAtLevel.get(delta.order_id);
+								order.size = Double.parseDouble(delta.new_size);
+							}
+						} else if (askMap.containsKey(price)) {
+							TreeMap<String, Order> ordersAtLevel = askMap.get(price);
+							if (ordersAtLevel.containsKey(delta.order_id)) {
+								// It's on the book; it must be a resting limit order
+								Order order = ordersAtLevel.get(delta.order_id);
+								order.size = Double.parseDouble(delta.new_size);
+							}
+						}
+						publish();
+					} else if (delta.type.equals("error")) {
+						log.severe("Received error message: "+delta.message);
+						// The exchange API says it will disconnect us, so let's handle this gracefully
+						Thread.currentThread().interrupt();
 					}
 					
-					
-					// Processing complete and update published
-					currentSequence++;
 				} else {
 					// Missed an inbound sequence number
 					log.severe("Received delta update out of sequence, re-initializing");
+					
+					// TODO: handle if in replay mode
 					client.stop();
 					initialize();
 				}
@@ -271,6 +310,35 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		
 		// finally... dispose of resources gracefully?
 		
+	}
+	
+	private void addToMap(TreeMap<Double, TreeMap<String, Order>> map, Order order) {
+		if (map.containsKey(order.price)) {
+			TreeMap<String, Order> ordersAtLevel = map.get(order.price);
+			if (! ordersAtLevel.containsKey(order.order_id)) {
+				ordersAtLevel.put(order.order_id, order);
+				log.finest("Added order "+order.toString()+" to existing order map at that price");
+			} else {
+				log.severe("Attempted to add order "+order.toString()+" to map when it already belongs and failed!");
+			}
+		} else {
+			TreeMap<String, Order> ordersAtLevel = new TreeMap<String, Order>();
+			ordersAtLevel.put(order.order_id, order);
+			map.put(order.price, ordersAtLevel);
+			log.finest("Added order "+order.toString()+" to new order map at that price");
+		}
+	}
+	
+	private void removeFromMap(TreeMap<Double, TreeMap<String, Order>> map, Double price, String order_id) {
+		if (map.containsKey(price)) {
+			TreeMap<String, Order> ordersAtLevel = map.get(price);
+			ordersAtLevel.remove(order_id);
+			if (ordersAtLevel.isEmpty()) {
+				map.remove(price); // for efficiency reasons
+			}
+		} else {
+			log.severe("Attempted to remove order "+order_id+" from map when its price was not present!");
+		}
 	}
 	
 	void shutdown() {

@@ -15,20 +15,19 @@ public class MarketData {
 	
 		LinkedBlockingQueue<OrderBook> queue = new LinkedBlockingQueue<OrderBook>();
 		
-		Thread OrderBookBuilderThread = new Thread(
-				new PeriodicOrderBookBuilder(Exchange.REPLAY, p.getProducts().get(0), queue),"OrderBookBuilderThread");
-		OrderBookBuilderThread.start();
-		
 		/* Thread OrderBookBuilderThread = new Thread(
-				new RealtimeOrderBookBuilder(Exchange.PRODUCTION, p.getProducts().get(0), queue)
-				,"OrderBookBuilderThread");
+				new PeriodicOrderBookBuilder(Exchange.REPLAY, p.getProducts().get(0), queue),"OrderBookBuilderThread");
 		OrderBookBuilderThread.start(); */
+		
+		Thread OrderBookBuilderThread = new Thread(
+				new RealtimeOrderBookBuilder(Exchange.REPLAY, p.getProducts().get(0), queue)
+				,"OrderBookBuilderThread");
+		OrderBookBuilderThread.start();
 
 		
-		/* Thread ZeroMQPublisherThread = new Thread(
+		Thread ZeroMQPublisherThread = new Thread(
 				new ZeroMQPublisher(queue), "ZeroMQPublisherThread");
 		ZeroMQPublisherThread.start();
-		*/
 
 	}
 

@@ -19,8 +19,7 @@ B. Zero MQ Publisher thread
 
 To Do:
 
-* Build test harness for market data using recorded stuff
-* (Possibly) Complete real-time Coinbase websocket subscription
+* Add timing log messages to RealtimeOrderBookBuilder
 * Extend to Bitstamp, or whatever the next largest US exchange is (look at distribution by volume)
 * Select exchange/environment and pub/sub IP, port using properties file
 * Build test cases - I really ought to do this before I rely on it financially
@@ -39,6 +38,8 @@ Issues/Risks:
 		* ...but I look up objects in the TreeMap using Doubles...
 		* ...but I pass them by reference... - seems to work for the simpler implementation
 		* Probably depends on the precise implementation of TreeMap.containsKey() - does it do .equals() or == ?
+		* UPDATE: yes it works, so it must be using .equals(), 
+		* and someone must have overridden Double.equals() with something sensible.  See Examples/MapGetTest.java.
 	* How do we effectively test the order book algorithm to make sure it works properly?
 		* Record a stream of JSON updates in text and build a test framework to check deltas sum up to image
 			* Could JUnit be used for this?
@@ -55,10 +56,11 @@ Issues/Risks:
 		* I use Iterators extensively for both inner/outer loops in the OrderBookBuilder, are they OK?
 		* Might a simple index over an array be faster?
 		* Could I at least apply DRY using the Reflection API?
-* Is JSON fast enough for internal serialization, or should I be using Protobuf?
+* Is JSON fast enough for internal serialization over ZeroMQ, or should I be using Protobuf?
 	* Protobuf is complicated & needs separate class definition files
 	* Messages are fairly small and infrequent, so it probably doesn't make a diff
 	* Keep it simple for now & upgrade to Protobuf if required later
+	* The calculated L2 order books are pretty compact though
 
 ^
 |
