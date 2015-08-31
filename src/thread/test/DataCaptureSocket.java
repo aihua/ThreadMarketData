@@ -26,14 +26,14 @@ public class DataCaptureSocket {
 	final Logger log = Logger.getLogger("thread.marketdata.MarketDataSocket");
  
     Session session;
-    Products.Product product;
+    String currencyPair;
     Queue<String> queue;
  
-    public DataCaptureSocket(Products.Product product, Queue<String> queue) {
+    public DataCaptureSocket(String currencyPair, Queue<String> queue) {
     	this.closeLatch = new CountDownLatch(1);
-    	this.product = product;
+    	this.currencyPair = currencyPair;
     	this.queue = queue;
-        log.info("Created MarketDataSocket for product: "+product.id);
+        log.info("Created MarketDataSocket for product: "+currencyPair);
     }
   
     public boolean awaitClose(int duration, TimeUnit unit) throws InterruptedException {
@@ -51,7 +51,7 @@ public class DataCaptureSocket {
     public void onConnect(Session session) {
         this.session = session;
         log.info("Websocket onConnect");
-        RawProductSubscription ps = new RawProductSubscription(product);
+        RawProductSubscription ps = new RawProductSubscription(currencyPair);
         String psString = gson.toJson(ps);
         log.info("About to submit product subscription: "+psString);
         try {

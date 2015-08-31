@@ -13,6 +13,8 @@ import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import thread.common.*;
+
 import com.google.gson.Gson;
 
 public class PeriodicOrderBookBuilder implements Runnable {
@@ -32,7 +34,7 @@ public class PeriodicOrderBookBuilder implements Runnable {
 	RawOrderBookImage image;
 	LinkedBlockingQueue<OrderBook> outboundQueue;
 	Exchange exchange;
-	Products.Product product;
+	String currencyPair;
 	TreeMap<Double, Double> bidMap;
 	TreeMap<Double, Double> askMap;
 	Instant startTime;
@@ -41,9 +43,9 @@ public class PeriodicOrderBookBuilder implements Runnable {
 	private Integer currentSequence;
 	private Instant MarketTime;
 	
-	PeriodicOrderBookBuilder(Exchange exchange, Products.Product product, LinkedBlockingQueue<OrderBook> outboundQueue) {		
+	PeriodicOrderBookBuilder(Exchange exchange, String currencyPair, LinkedBlockingQueue<OrderBook> outboundQueue) {		
 		this.exchange = exchange;
-		this.product = product;
+		this.currencyPair = currencyPair;
 		this.outboundQueue = outboundQueue;
 		startTime = Instant.now();
 	}
@@ -94,12 +96,10 @@ public class PeriodicOrderBookBuilder implements Runnable {
 					e.printStackTrace();
 				}
 			}
-			OrderBook ob = new OrderBook(product);
 			// Time-stamp start and populate TreeMaps
-			ob.OrderBookBuilderStartTime = Instant.now();
-			ob.MarketTime = MarketTime;
+			Instant OrderBookBuilderStartTime = Instant.now();
 			currentSequence = Integer.parseInt(image.sequence);
-			ob.sequenceNumber = currentSequence;
+			Integer sequenceNumber = currentSequence;
 			bidMap = new TreeMap<Double, Double>();
 			askMap = new TreeMap<Double, Double>();
 			for (String[] array: image.bids) {
@@ -119,25 +119,30 @@ public class PeriodicOrderBookBuilder implements Runnable {
 			}
 			Iterator<Double> priceIterator;
 			priceIterator = bidMap.descendingKeySet().iterator();
-			ob.BidPrice0 = priceIterator.next();
-			ob.BidSize0 = bidMap.get(ob.BidPrice0);
-			ob.BidPrice1 = priceIterator.next();
-			ob.BidSize1 = bidMap.get(ob.BidPrice1);
-			ob.BidPrice2 = priceIterator.next();
-			ob.BidSize2 = bidMap.get(ob.BidPrice2);
+			Double BidPrice0 = priceIterator.next();
+			Double BidSize0 = bidMap.get(BidPrice0);
+			Double BidPrice1 = priceIterator.next();
+			Double BidSize1 = bidMap.get(BidPrice1);
+			Double BidPrice2 = priceIterator.next();
+			Double BidSize2 = bidMap.get(BidPrice2);
 			priceIterator = askMap.keySet().iterator();
-			ob.AskPrice0 = priceIterator.next();
-			ob.AskSize0 = askMap.get(ob.AskPrice0);
-			ob.AskPrice1 = priceIterator.next();
-			ob.AskSize1 = askMap.get(ob.AskPrice1);
-			ob.AskPrice2 = priceIterator.next();
-			ob.AskSize2 = askMap.get(ob.AskPrice2);
+			Double AskPrice0 = priceIterator.next();
+			Double AskSize0 = askMap.get(AskPrice0);
+			Double AskPrice1 = priceIterator.next();
+			Double AskSize1 = askMap.get(AskPrice1);
+			Double AskPrice2 = priceIterator.next();
+			Double AskSize2 = askMap.get(AskPrice2);
 			// Time-stamp end and send
-			ob.OrderBookBuilderEndTime = Instant.now();
+			Instant OrderBookBuilderEndTime = Instant.now();
+			OrderBook ob = new OrderBook(currencyPair, MarketTime, OrderBookBuilderStartTime, 
+					OrderBookBuilderEndTime, sequenceNumber, BidPrice2, BidSize2, 
+					BidPrice1, BidSize1, BidPrice0, BidSize0, 
+					AskPrice0, AskSize0, AskPrice1, AskSize1, 
+					AskPrice2, AskSize2); 
 			outboundQueue.add(ob);
-			log.info("Outbound order book "+ob.sequenceNumber+" [market->gwy "
-					+Duration.between(ob.MarketTime, ob.OrderBookBuilderStartTime).toMillis()+" ms] [gwy processing "
-					+Duration.between(ob.OrderBookBuilderStartTime, ob.OrderBookBuilderEndTime).toMillis()+" ms]");
+			log.info("Outbound order book "+sequenceNumber+" [market->gwy "
+					+Duration.between(MarketTime, OrderBookBuilderStartTime).toMillis()+" ms] [gwy processing "
+					+Duration.between(OrderBookBuilderStartTime, OrderBookBuilderEndTime).toMillis()+" ms]");
 			
 			if (! exchange.equals(Exchange.REPLAY)) {
 				// Only pause if running from a live server

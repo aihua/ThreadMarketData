@@ -1,6 +1,9 @@
 package thread.marketdata;
 
 import java.io.BufferedReader;
+
+import thread.common.*;
+
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -32,17 +35,17 @@ public class RealtimeOrderBookBuilder implements Runnable {
 	WebSocketClient client;
 	MarketDataSocket socket;
 	Exchange exchange;
-	Products.Product product;
+	String currencyPair;
 	
 	private TreeMap<Double, TreeMap<String, Order>> bidMap; // price -> (order_id -> order)
 	private TreeMap<Double, TreeMap<String, Order>> askMap;
 	private Integer currentSequence;
 	private Instant MarketTime;
 	
-	RealtimeOrderBookBuilder(Exchange exchange, Products.Product product, 
+	RealtimeOrderBookBuilder(Exchange exchange, String currencyPair, 
 			LinkedBlockingQueue<OrderBook> outboundQueue) {		
 		this.exchange = exchange;
-		this.product = product;
+		this.currencyPair = currencyPair;
 		this.outboundQueue = outboundQueue;
 	}
 	
@@ -57,7 +60,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		log.info("Starting real time subscription");
 		if (! exchange.equals(Exchange.REPLAY)) {
 			client = new WebSocketClient(new SslContextFactory());
-			socket = new MarketDataSocket(product, inboundQueue);
+			socket = new MarketDataSocket(currencyPair, inboundQueue);
 			try {
 				client.start();
 				URI uri = new URI(exchange.websocket);
@@ -69,7 +72,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 				e.printStackTrace();
 			}
 		} else {
-			Thread t1 = new Thread(new DataReplaySocket(exchange, product, inboundQueue), "DataReplaySocket");
+			Thread t1 = new Thread(new DataReplaySocket(exchange, currencyPair, inboundQueue), "DataReplaySocket");
 			t1.start();
 		}
 		
@@ -129,77 +132,80 @@ public class RealtimeOrderBookBuilder implements Runnable {
 	
 	public void publish() {
 		// Sync (private) tree maps to new immutable order book object and emit
-		OrderBook ob = new OrderBook(product);
-		ob.sequenceNumber = currentSequence;
-		ob.MarketTime = MarketTime;
-		ob.OrderBookBuilderStartTime = Instant.now();
+		Integer sequenceNumber = currentSequence;
+		Instant OrderBookBuilderStartTime = Instant.now();
 		Iterator<Double> priceIterator;
 		priceIterator = bidMap.descendingKeySet().iterator();
 		// Oh lord this is ugly.
 		TreeMap<String, Order> ordersAtLevel;
 		Iterator<String> orderIterator;
 		// Bid0
-		ob.BidPrice0 = priceIterator.next();
-		ob.BidSize0 = 0.0;
-		ordersAtLevel = bidMap.get(ob.BidPrice0);
+		Double BidPrice0 = priceIterator.next();
+		Double BidSize0 = 0.0;
+		ordersAtLevel = bidMap.get(BidPrice0);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.BidSize0 += ord.size;
+			BidSize0 += ord.size;
 		}
 		// Bid1
-		ob.BidPrice1 = priceIterator.next();
-		ob.BidSize1 = 0.0;
-		ordersAtLevel = bidMap.get(ob.BidPrice1);
+		Double BidPrice1 = priceIterator.next();
+		Double BidSize1 = 0.0;
+		ordersAtLevel = bidMap.get(BidPrice1);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.BidSize1 += ord.size;
+			BidSize1 += ord.size;
 		}
 		// Bid2
-		ob.BidPrice2 = priceIterator.next();
-		ob.BidSize2 = 0.0;
-		ordersAtLevel = bidMap.get(ob.BidPrice2);
+		Double BidPrice2 = priceIterator.next();
+		Double BidSize2 = 0.0;
+		ordersAtLevel = bidMap.get(BidPrice2);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.BidSize2 += ord.size;
+			BidSize2 += ord.size;
 		}
 		priceIterator = askMap.keySet().iterator();
 		// Ask0
-		ob.AskPrice0 = priceIterator.next();
-		ob.AskSize0 = 0.0;
-		ordersAtLevel = askMap.get(ob.AskPrice0);
+		Double AskPrice0 = priceIterator.next();
+		Double AskSize0 = 0.0;
+		ordersAtLevel = askMap.get(AskPrice0);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.AskSize0 += ord.size;
+			AskSize0 += ord.size;
 		}
 		// Ask1
-		ob.AskPrice1 = priceIterator.next();
-		ob.AskSize1 = 0.0;
-		ordersAtLevel = askMap.get(ob.AskPrice1);
+		Double AskPrice1 = priceIterator.next();
+		Double AskSize1 = 0.0;
+		ordersAtLevel = askMap.get(AskPrice1);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.AskSize1 += ord.size;
+			AskSize1 += ord.size;
 		}
 		// Ask2
-		ob.AskPrice2 = priceIterator.next();
-		ob.AskSize2 = 0.0;
-		ordersAtLevel = askMap.get(ob.AskPrice2);
+		Double AskPrice2 = priceIterator.next();
+		Double AskSize2 = 0.0;
+		ordersAtLevel = askMap.get(AskPrice2);
 		orderIterator = ordersAtLevel.keySet().iterator();
 		while (orderIterator.hasNext()) {
 			String orderID = orderIterator.next();
 			Order ord = ordersAtLevel.get(orderID);
-			ob.AskSize2 += ord.size;
+			AskSize2 += ord.size;
 		}
-		ob.OrderBookBuilderEndTime = Instant.now();
+		Instant OrderBookBuilderEndTime = Instant.now();
+		OrderBook ob = new OrderBook(currencyPair, MarketTime, OrderBookBuilderStartTime, 
+				OrderBookBuilderEndTime, sequenceNumber, BidPrice2, BidSize2, 
+				BidPrice1, BidSize1, BidPrice0, BidSize0, 
+				AskPrice0, AskSize0, AskPrice1, AskSize1, 
+				AskPrice2, AskSize2); 
 		outboundQueue.add(ob);
 	}
 	
@@ -216,7 +222,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 					// Ignore: before our REST snapshot
 					log.fine("Ignoring delta "+delta.sequence+" as it's before our snapshot");
 				} else if ((Integer.parseInt(delta.sequence) == (currentSequence + 1)) 
-						&& (delta.product_id.equals(product.id))) {
+						&& (delta.product_id.equals(currencyPair))) {
 					// Delta is next in sequence and for correct product: update bid/ask maps
 					log.fine("Processing delta "+delta.sequence);
 					if (delta.type.equals("received")) {
@@ -234,7 +240,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 						Double size = Double.parseDouble(delta.remaining_size);
 						/* Order(String type, Instant time, String product_id, Integer sequence, String order_id, String side,
 							Double size, Double price, String funds) */
-						Order ord = new Order(Order.OrderType.LIMIT, MarketTime, product.id, currentSequence, 
+						Order ord = new Order(Order.OrderType.LIMIT, MarketTime, currencyPair, currentSequence, 
 								delta.order_id, delta.side, size, price, delta.funds);
 						if (delta.side.equals("buy")) {
 							// Someone wants to buy, so add to bid map (if they paid more it would have traded)

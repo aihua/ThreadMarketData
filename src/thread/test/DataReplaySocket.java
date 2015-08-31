@@ -21,7 +21,7 @@ public class DataReplaySocket implements Runnable {
 	final static Logger log = Logger.getLogger("thread.marketdata.DataReplaySocket");
 
 	Exchange exchange;
-    Products.Product product;
+    String currencyPair;
     Queue<RawOrderBookUpdate> queue;
     Instant startTime;
     FileReader fr;
@@ -29,14 +29,14 @@ public class DataReplaySocket implements Runnable {
     String line;
     Gson gson;
 	
-	public DataReplaySocket(Exchange exchange, Products.Product product, Queue<RawOrderBookUpdate> queue) {
+	public DataReplaySocket(Exchange exchange, String currencyPair, Queue<RawOrderBookUpdate> queue) {
 		log.info("Initializing DataReplaySocket");
 		if (! exchange.equals(Exchange.REPLAY)) {
 			log.severe("Trying to replay data from a non-REPLAY Exchange!");
 		}
 		gson = new Gson();
 		this.exchange = exchange;
-		this.product = product;
+		this.currencyPair = currencyPair;
 		this.queue = queue;
 		try {
 			fr = new FileReader(exchange.websocket);

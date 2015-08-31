@@ -1,6 +1,8 @@
 package thread.marketdata;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import thread.common.*;
+
 import java.util.logging.Logger;
 
 import org.zeromq.ZMQ;
@@ -13,15 +15,17 @@ public class ZeroMQPublisher implements Runnable {
 	final Gson gson = new Gson();
 	
 	LinkedBlockingQueue<OrderBook> inboundQueue;
+	Integer gatewayPort;
 	ZMQ.Context context;
 	ZMQ.Socket socket;
 	
-	ZeroMQPublisher(LinkedBlockingQueue<OrderBook> inboundQueue) {
+	ZeroMQPublisher(Integer gatewayPort, LinkedBlockingQueue<OrderBook> inboundQueue) {
 		log.info("Opening outbound ZeroMQ publisher on port 5555");
 		this.inboundQueue = inboundQueue;
+		this.gatewayPort = gatewayPort;
 		context = ZMQ.context(1);
 		socket = context.socket(ZMQ.PUB);
-		socket.bind("tcp://*:5555");
+		socket.bind("tcp://*:"+gatewayPort.toString());
 	}
 	
 	public void run() {

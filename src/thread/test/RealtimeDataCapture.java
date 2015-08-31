@@ -29,7 +29,7 @@ public class RealtimeDataCapture {
 		Thread t1 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION, false); // don't re-record to a file
+				String currencyPair = "BTC-USD";
 				LinkedBlockingQueue<String> inboundQueue = new LinkedBlockingQueue<String>();
 
 				// Open output file
@@ -45,7 +45,7 @@ public class RealtimeDataCapture {
 				// Start real-time subscription	filling queue	
 				log.info("Starting real time subscription");
 				WebSocketClient client = new WebSocketClient(new SslContextFactory());
-				DataCaptureSocket socket = new DataCaptureSocket(p.getProducts().get(0), inboundQueue);
+				DataCaptureSocket socket = new DataCaptureSocket(currencyPair, inboundQueue);
 				try {
 					client.start();
 					URI uri = new URI(Exchange.PRODUCTION.websocket);
@@ -78,8 +78,6 @@ public class RealtimeDataCapture {
 		Thread t2 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION, false);
-				Products.Product product = p.getProducts().get(0);
 				
 				// Open output file
 				PrintWriter out = null;
@@ -94,7 +92,7 @@ public class RealtimeDataCapture {
 		
 				while (! Thread.currentThread().isInterrupted()) {
 					try {
-						URL url = new URL(Exchange.PRODUCTION.API + "/products/" + product.id + "/book?level=2");
+						URL url = new URL(Exchange.PRODUCTION.level2orderbook);
 						Instant timestamp = Instant.now(); // estimate... not provided in REST
 					    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 						String msg = in.readLine();
@@ -113,8 +111,6 @@ public class RealtimeDataCapture {
 		Thread t3 = new Thread() {
 			public void run() {
 				Instant startTime = Instant.now();
-				Products p = new Products(Exchange.PRODUCTION, false);
-				Products.Product product = p.getProducts().get(0);
 				
 				// Open output file
 				PrintWriter out = null;
@@ -129,7 +125,7 @@ public class RealtimeDataCapture {
 		
 				while (! Thread.currentThread().isInterrupted()) {
 					try {
-						URL url = new URL(Exchange.PRODUCTION.API + "/products/" + product.id + "/book?level=3");
+						URL url = new URL(Exchange.PRODUCTION.level3orderbook);
 						Instant timestamp = Instant.now(); // estimate... not provided in REST
 					    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 						String msg = in.readLine();

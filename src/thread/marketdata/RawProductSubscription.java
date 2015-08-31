@@ -4,8 +4,8 @@ public class RawProductSubscription {
 	String type;
 	String product_id;
 	
-	public RawProductSubscription(Products.Product p) {
+	public RawProductSubscription(String currencyPair) {
 		this.type = "subscribe";
-		this.product_id = p.id;
+		this.product_id = currencyPair;
 	}
 }
