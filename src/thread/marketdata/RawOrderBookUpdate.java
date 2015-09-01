@@ -60,4 +60,29 @@ public class RawOrderBookUpdate {
 		this.message = message;
 	}
 	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("[");
+		if (type != null) {sb.append("type "+type+", ");}
+		if (time != null) {sb.append("time "+time.toString()+", ");}
+		if (product_id != null) {sb.append("product_id "+product_id+", ");}
+		if (sequence != null) {sb.append("sequence "+sequence+", ");}
+		if (order_id != null) {sb.append("order_id "+order_id+", ");}
+		if (side != null) {sb.append("side "+side+", ");}
+		if (order_type != null) {sb.append("order_type "+order_type+", ");}
+		if (size != null) {sb.append("size "+size+", ");}
+		if (price != null) {sb.append("price "+price+", ");}
+		if (funds != null) {sb.append("funds "+funds);}
+		if (remaining_size != null) {sb.append("remaining_size "+remaining_size+", ");}
+		if (reason != null) {sb.append("reason "+reason+", ");}
+		if (maker_order_id != null) {sb.append("maker_order_id "+maker_order_id+", ");}
+		if (taker_order_id != null) {sb.append("taker_order_id "+taker_order_id+", ");}
+		if (new_size != null) {sb.append("new_size "+new_size+", ");}
+		if (old_size != null) {sb.append("old_size "+old_size+", ");}
+		if (new_funds != null) {sb.append("new_funds "+new_funds+", ");}
+		if (old_funds != null) {sb.append("old_funds "+old_funds+", ");}
+		if (message != null) {sb.append("message "+message+", ");}
+		sb.append("]");
+		return sb.toString();
+	}
 }

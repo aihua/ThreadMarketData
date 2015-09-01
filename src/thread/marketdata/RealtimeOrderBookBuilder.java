@@ -213,7 +213,7 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		log.info("Processing delta updates");
 		while (! Thread.currentThread().isInterrupted()) {
 			// Main loop in normal running
-			RawOrderBookUpdate delta;
+			RawOrderBookUpdate delta = null;
 			try {
 				delta = inboundQueue.take();
 				if (Integer.parseInt(delta.sequence) <= currentSequence) {
@@ -302,10 +302,10 @@ public class RealtimeOrderBookBuilder implements Runnable {
 					initialize();
 				}
 			} catch (InterruptedException e) {
-				log.severe("Caught InterruptedException while trying to take from inbound queue");
+				log.severe("Caught InterruptedException while trying to take from inbound queue: delta "+delta.toString());
 				e.printStackTrace();
 			} catch (Exception e) {
-				log.severe("Caught exception trying to stop websocket client gracefully: "+e.getMessage());
+				log.severe("Caught exception trying to take from inbound queue: delta "+delta.toString());
 				e.printStackTrace();
 			}
 			
