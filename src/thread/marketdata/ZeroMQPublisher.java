@@ -1,8 +1,6 @@
 package thread.marketdata;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import thread.common.*;
-
 import java.util.logging.Logger;
 
 import org.zeromq.ZMQ;
@@ -20,7 +18,7 @@ public class ZeroMQPublisher implements Runnable {
 	ZMQ.Socket socket;
 	
 	ZeroMQPublisher(Integer gatewayPort, LinkedBlockingQueue<OrderBook> inboundQueue) {
-		log.info("Opening outbound ZeroMQ publisher on port 5555");
+		log.info("Opening outbound ZeroMQ publisher on port "+gatewayPort.toString());
 		this.inboundQueue = inboundQueue;
 		this.gatewayPort = gatewayPort;
 		context = ZMQ.context(1);

@@ -13,8 +13,6 @@ import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import thread.common.*;
-
 import com.google.gson.Gson;
 
 public class PeriodicOrderBookBuilder implements Runnable {

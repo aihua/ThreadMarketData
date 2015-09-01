@@ -2,8 +2,6 @@ package thread.marketdata;
 
 import java.io.BufferedReader;
 
-import thread.common.*;
-
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URI;

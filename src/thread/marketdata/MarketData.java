@@ -7,8 +7,6 @@ import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import thread.common.*;
-
 public class MarketData {
 
 	final static Logger log = Logger.getLogger("thread.marketdata.MarketData");
