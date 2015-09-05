@@ -19,27 +19,16 @@ B. Zero MQ Publisher thread
 
 To Do:
 
-* Add timing log messages to RealtimeOrderBookBuilder
 * Extend to Bitstamp, or whatever the next largest US exchange is (look at distribution by volume)
-* Select exchange/environment and pub/sub IP, port using properties file
 * Build test cases - I really ought to do this before I rely on it financially
+
+Useful:
+* Print latency report of last 100 ticks in DB:
+select count sequenceNumber by 1 xbar timeDiff:(KDBCaptureTime-OrderBookBuilderStartTime)*(24*60*60*1000) from (select [-100] from tick)
 
 Issues/Risks:
 
-* Can I do without a full, real-time order book in the short term?
-	* Just poll once every few seconds or something
-	* Would be enough for low-resolution algos O(days)
-	* Would significantly simplify the logic
-	* Would be drop-in replaceable for Bitstamp
 * RealtimeOrderBookBuilder has "issues"
-	* Will Integer x == Integer y work the way I think or do I need to use .equals()?
-		* Only if x, y are between -128 and 127 (!!!)
-		* https://www.owasp.org/index.php/Java_gotchas#Immutable_Objects_.2F_Wrapper_Class_Caching
-		* ...but I look up objects in the TreeMap using Doubles...
-		* ...but I pass them by reference... - seems to work for the simpler implementation
-		* Probably depends on the precise implementation of TreeMap.containsKey() - does it do .equals() or == ?
-		* UPDATE: yes it works, so it must be using .equals(), 
-		* and someone must have overridden Double.equals() with something sensible.  See Examples/MapGetTest.java.
 	* How do we effectively test the order book algorithm to make sure it works properly?
 		* Record a stream of JSON updates in text and build a test framework to check deltas sum up to image
 			* Could JUnit be used for this?
