@@ -64,3 +64,25 @@ Recorded data:
 
 * L3 web socket updates need to start first, at sequence 157,866,615 (if re-recording beware this)
 * L3 web service images start afterwards at sequence 157,866,848
+
+KDB setup
+---------
+
+* Database should be splayed (each col in diff file) and partitioned (by date), e.g.
+	`:db/2015.11.11/t/ set ([] time:09:30:00 09:31:00 sym:`:db/sym?`ibm`msft; p:101 33f)
+* Q can automatically load the database and any other serialised objects if path is specified on the command line
+* The page you want to follow is http://code.kx.com/wiki/JB:KdbplusForMortals/splayed_tables et seq
+* In order:
+	* Create the table, e.g. `:db/t/ set ([] ti:09:30:00 09:31:00; p:101.5 33.5)
+		* Note no leading / (not root dir) but there is a trailing slash (to indicate splayed table)
+	* "Load" (tie) the database into namespace, e.g. \l db
+		* Note no slashes
+	* Or just start q pointing to the db, e.g. q db/
+		* Not sure if trailing slash changes behavior (perhaps)
+	* Upsert into the table, e.g. `:db/t/ upsert(09:32:00; 102.5)
+		* Note Q is annoying about datatypes; 102 wouldn't work (102f or 102.0 would)
+	* Syms in tables must be enumerated in db/sym, and the quickest and easiest way to do this is using .Q.en, e.g.
+		* memtab:([]sym:`APPL`MSFT`GOOG;px:605.0 75.2 405.2)
+		* `:db/disktab/ set .Q.en[`:db] memtab
+* 
+
