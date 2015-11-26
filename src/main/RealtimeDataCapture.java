@@ -1,4 +1,4 @@
-package thread.test;
+package main;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
@@ -11,11 +11,11 @@ import java.time.Instant;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import main.sockets.DataCaptureSocket;
+
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-
-import thread.marketdata.*;
 
 public class RealtimeDataCapture {
 	// Used to capture data from the webservices to disk for later coherence testing

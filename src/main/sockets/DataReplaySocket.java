@@ -1,4 +1,4 @@
-package thread.test;
+package main.sockets;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -8,17 +8,16 @@ import java.time.Instant;
 import java.util.Queue;
 import java.util.logging.Logger;
 
-import com.google.gson.Gson;
+import main.Exchange;
+import main.RawOrderBookUpdate;
 
-import thread.marketdata.Exchange;
-import thread.marketdata.Products;
-import thread.marketdata.RawOrderBookUpdate;
+import com.google.gson.Gson;
 
 public class DataReplaySocket implements Runnable {
 	// Emulates a MarketDataSocket but plays back data from disk
 	// NB this implements Runnable because the actual MarketDataSocket is called on demand when data received
 	
-	final static Logger log = Logger.getLogger("thread.marketdata.DataReplaySocket");
+	final static Logger log = Logger.getLogger("main.DataReplaySocket");
 
 	Exchange exchange;
     String currencyPair;

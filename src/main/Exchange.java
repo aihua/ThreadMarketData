@@ -1,4 +1,4 @@
-package thread.marketdata;
+package main;
 
 public enum Exchange {
 	SANDBOX ("https://public.sandbox.exchange.coinbase.com",
@@ -16,6 +16,8 @@ public enum Exchange {
 			"/Users/nick/Dev/Data/Coinbase-L2-webservice-images.txt",
 			"/Users/nick/Dev/Data/Coinbase-L3-webservice-images.txt",
 			"/Users/nick/Dev/Data/Coinbase-websocket-updates.txt");
+	
+	// TODO: Be consistent with single BTC-USD or multiple product feed
 	
 	public final String website;
 	public final String products;

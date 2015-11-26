@@ -1,4 +1,4 @@
-package thread.marketdata;
+package main;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 public class MarketData {
 
-	final static Logger log = Logger.getLogger("thread.marketdata.MarketData");
+	final static Logger log = Logger.getLogger("main.MarketData");
 	static Integer gatewayPort;
 	static String builderType;
 	static String currencyPair;
@@ -43,6 +43,7 @@ public class MarketData {
 		Thread OrderBookBuilderThread;
 		
 		switch (builderType) {
+		//TODO: Clarify whether REPLAY exchange influences this
 		case "realtime":
 			log.info("Starting realtime orderbook builder");
 			OrderBookBuilderThread = new Thread(

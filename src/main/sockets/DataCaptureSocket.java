@@ -1,4 +1,4 @@
-package thread.test;
+package main.sockets;
 
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
@@ -6,15 +6,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import main.RawProductSubscription;
+
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-
-import thread.marketdata.Products;
-import thread.marketdata.RawOrderBookUpdate;
-import thread.marketdata.RawProductSubscription;
 
 import com.google.gson.Gson;
 
@@ -23,7 +21,7 @@ public class DataCaptureSocket {
 	 
 	private final CountDownLatch closeLatch;
 	final Gson gson = new Gson();
-	final Logger log = Logger.getLogger("thread.marketdata.MarketDataSocket");
+	final Logger log = Logger.getLogger("main.MarketDataSocket");
  
     Session session;
     String currencyPair;

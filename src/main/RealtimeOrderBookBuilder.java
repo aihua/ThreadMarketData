@@ -1,26 +1,24 @@
-package thread.marketdata;
+package main;
 
 import java.io.BufferedReader;
-
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Queue;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+
+import main.sockets.DataReplaySocket;
+import main.sockets.MarketDataSocket;
 
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import com.google.gson.Gson;
-
-import thread.test.DataReplaySocket;
 
 public class RealtimeOrderBookBuilder implements Runnable {
 	
@@ -213,16 +211,20 @@ public class RealtimeOrderBookBuilder implements Runnable {
 		log.info("Processing delta updates");
 		while (! Thread.currentThread().isInterrupted()) {
 			// Main loop in normal running
-			RawOrderBookUpdate delta = null;
+			RealtimeEvent r = null; // Make failure obvious
 			try {
-				delta = inboundQueue.take();
-				if (Integer.parseInt(delta.sequence) <= currentSequence) {
+				r = new RealtimeEvent(inboundQueue.take());
+			} catch (InterruptedException e1) {
+				log.severe("RealtimeOrderBookBuilder interrupted!");
+				e1.printStackTrace();
+			}
+			try {
+				if (r.sequence <= currentSequence) {
 					// Ignore: before our REST snapshot
-					log.fine("Ignoring delta "+delta.sequence+" as it's before our snapshot");
-				} else if ((Integer.parseInt(delta.sequence) == (currentSequence + 1)) 
-						&& (delta.product_id.equals(currencyPair))) {
+					log.fine("Ignoring RealtimeEvent "+r.sequence+" as it's before our snapshot");
+				} else if (r.sequence == (currentSequence + 1) && (r.product_id.equals(currencyPair))) {
 					// Delta is next in sequence and for correct product: update bid/ask maps
-					log.fine("Processing delta "+delta.sequence);
+					log.fine("Processing event "+r.sequence);
 					if (delta.type.equals("received")) {
 						// An order was received by the matching engine
 						// Ignore for now: but we may want to do something with this later for our own orders

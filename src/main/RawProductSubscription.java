@@ -1,4 +1,4 @@
-package thread.marketdata;
+package main;
 
 public class RawProductSubscription {
 	String type;

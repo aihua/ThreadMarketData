@@ -1,4 +1,4 @@
-package thread.marketdata;
+package main;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -26,7 +26,7 @@ public class PeriodicOrderBookBuilder implements Runnable {
 	
 	final static Integer PAUSETIME = 5000;
 	
-	final Logger log = Logger.getLogger("thread.marketdata.PeriodicOrderBookBuilder");
+	final Logger log = Logger.getLogger(PeriodicOrderBookBuilder.class.getCanonicalName());
 	final Gson gson = new Gson();
 	
 	RawOrderBookImage image;

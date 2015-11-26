@@ -1,10 +1,13 @@
-package thread.marketdata;
+package main.sockets;
 
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import main.RawOrderBookUpdate;
+import main.RawProductSubscription;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;

@@ -37,8 +37,9 @@ Issues/Risks:
 			* Bids should be below asks
 			* Market should not be locked, etc.
 		* Build good individual unit test cases
+			* But needs a more OO style: not 360 lines of single-method craziness
 	* Should conflation be built in?  If so, where?
-		* Dropped updates in the OrderBookBuilder thread are fatal & need resync
+		* Dropped updates in the OrderBookBuilder thread are fatal & need resync: this is explicitly expected
 		* But we should plan for slow consumers downstream
 		* Is this something I have to deal with straight away?
 	* Summing over the orders is obviously performance-critical
@@ -84,5 +85,15 @@ KDB setup
 	* Syms in tables must be enumerated in db/sym, and the quickest and easiest way to do this is using .Q.en, e.g.
 		* memtab:([]sym:`APPL`MSFT`GOOG;px:605.0 75.2 405.2)
 		* `:db/disktab/ set .Q.en[`:db] memtab
-* 
+* For a splayed, partitioned AND sorted table, as follows:
+	* tab:([] time:09:31:00 09:31:00; sym:`APPL`MSFT; px:101.1 605.0)
+	* .Q.dpft[`:db;2015.11.11;`time;`tab]
+	* tab:([] time:10:00:02 10:00:03; sym:`IBM`IBM; px:65.0 65.1)
+	* .Q.dpft[`:db;2015.11.12;`time;`tab]
+	* Then reloading (e.g. \l db) shows entire table
+* In our case, we only have one sym (BTCUSD) so we don't need to worry about using .Q.en in the Java insert I think
+* So the order of events would be:
+	* Create the database and symbol table with one entry on disk
+	* Insert using explicit partition name and by reference to `:db/sym
+	* 
 
