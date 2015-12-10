@@ -7,4 +7,4 @@ See [Documentation](https://github.com/nof20/ThreadMarketData/wiki) and a list o
 
 ## Exchanges supported
 
-* Coinbase (in progress)
+* Coinbase (in progress).
