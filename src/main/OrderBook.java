@@ -32,6 +32,7 @@ public class OrderBook {
 		this.currencyPair = currencyPair;
 		this.MarketTime = MarketTime;
 		this.OrderBookBuilderStartTime = OrderBookBuilderStartTime;
+		this.OrderBookBuilderEndTime = OrderBookBuilderEndTime;
 		this.sequenceNumber = sequenceNumber;
 		this.BidPrice2 = BidPrice2;
 		this.BidSize2 = BidSize2;

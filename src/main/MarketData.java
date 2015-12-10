@@ -17,6 +17,7 @@ public class MarketData {
 	
 	public static void main(String[] args) {
 		log.info("Starting up Market Data publisher...");
+		log.finest("Finest logging enabled");
 		// Load properties
 		Properties props = new Properties();
 		try {

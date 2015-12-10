@@ -35,5 +35,14 @@ q)`sequenceNumber xkey `snapl2Key
 q)diffs: select BidPrice2Diff:BidPrice2-l2BidPrice2, BidSize2Diff:BidSize2-l2BidSize2, BidPrice1Diff:BidPrice1-l2BidPrice1, BidSize1Diff:BidSize1-l2BidSize1, BidPrice0Diff:BidPrice0-l2BidPrice0, BidSize0Diff:BidSize0-l2BidSize0, AskPrice0Diff:AskPrice0-l2AskPrice0, AskSize0Diff:AskSize0-l2AskSize0, AskPrice1Diff:AskPrice1-l2AskPrice1, AskSize1Diff:AskSize1-l2AskSize1, AskPrice2Diff:AskPrice2-l2AskPrice2, AskSize2Diff:AskSize2-l2AskSize2 from snapl2Key ij tickKey
 
 
+### Ignore all of that
 
+What we're going to do is this:
+
+* Setup 1
+	* Run a regular Level 3 order book market data model
+	* Capture everything to KDB
+* Setup 2
+	* Capture the full order book to test
+	* 
 
