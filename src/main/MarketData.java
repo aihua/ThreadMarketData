@@ -62,8 +62,7 @@ public class MarketData {
 		case "realtime":
 			log.info("Starting realtime orderbook builder");
 			OrderBookBuilderThread = new Thread(
-					new RealtimeOrderBookBuilder(exchange, currencyPair, queue)
-					,"OrderBookBuilderThread");
+					new RealtimeOrderBookBuilder(exchange, currencyPair, queue),"OrderBookBuilderThread");
 			OrderBookBuilderThread.start();
 			break;
 		case "periodic":
