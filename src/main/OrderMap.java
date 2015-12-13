@@ -121,9 +121,9 @@ public class OrderMap {
 			if (ordersAtLevel.isEmpty()) {
 				map.remove(price); // for efficiency reasons
 			}
-		} else {
-			log.severe("Attempted to remove order "+order_id+" from map when its price was not present!");
-			dumpOrderMap();
+			// Note it is a valid use case for a limit order to go received -> match -> done
+			// but received and match are ignored, so it appears to be "done" preceded by nothing
+			// (this looked like a particularly annoying bug for a long time).
 		}
 	}
 	
@@ -260,14 +260,6 @@ public class OrderMap {
 			log.severe("Dumped orderMap to "+filename);
 		} catch (Exception e) {
 			log.severe("Caught exception trying to dumpOrderMap: "+e.getMessage());
-			try {
-				String filename = "/Users/nick/Dev/Local/ThreadMarketData/OrderMapDump.txt";
-				FileWriter fw = new FileWriter(filename);
-				PrintWriter out = new PrintWriter(fw);
-				out.println(sb.toString());
-				out.close();
-				log.severe("Dumped orderMap to "+filename);
-			} catch (Exception e2) {};
 		}
 	}
 }
