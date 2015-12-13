@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class MarketData {
@@ -17,7 +18,20 @@ public class MarketData {
 	
 	public static void main(String[] args) {
 		log.info("Starting up Market Data publisher...");
-		log.finest("Finest logging enabled");
+		
+		// Load logging properties
+		try {
+			FileInputStream fis =  new FileInputStream("logging.properties");
+			LogManager.getLogManager().readConfiguration(fis);
+		    fis.close();
+		} catch (FileNotFoundException e) {
+			log.severe("Cannot find logging properties file: "+e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			log.severe("Caught IOException trying to load logging properties: "+e.getMessage());
+			e.printStackTrace();
+		}
+		
 		// Load properties
 		Properties props = new Properties();
 		try {
@@ -34,7 +48,7 @@ public class MarketData {
 		currencyPair = props.getProperty("currencyPair");
 		exchange = Exchange.valueOf(props.getProperty("exchange"));
 		log.info("Got properties: "+props.toString());
-		
+	    
 		// Get products:
 		Products p = new Products(exchange);
 		log.info("Got products from exchange: "+p.getProducts().toString());

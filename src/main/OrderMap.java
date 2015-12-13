@@ -252,7 +252,8 @@ public class OrderMap {
 					sb.append(ord.toString());
 				}
 			}
-			String filename = "/Users/nick/Dev/Local/ThreadMarketData/OrderMapDump.txt";
+			Instant i = Instant.now();
+			String filename = "OrderMapDump-"+i.toEpochMilli()+".txt";
 			FileWriter fw = new FileWriter(filename);
 			PrintWriter out = new PrintWriter(fw);
 			out.println(sb.toString());

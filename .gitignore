@@ -5,3 +5,5 @@ bin/*
 target/*
 /target/
 OrderMapDump.txt
+*.log
+*.lck
