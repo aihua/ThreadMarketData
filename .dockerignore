@@ -1,0 +1,5 @@
+.metadata
+*.log
+*.lck
+src/*
+pom.xml
