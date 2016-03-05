@@ -5,6 +5,8 @@ See [ThreadKDBFeed](https://github.com/nof20/ThreadKDBFeed) for a component to s
 
 See [Documentation](https://github.com/nof20/ThreadMarketData/wiki) and a list of [Current Issues](https://github.com/nof20/ThreadMarketData/issues).
 
+Use Maven to build and run the Java code.  Use the makefile to build the Java and to Docker.
+
 ## Exchanges supported
 
 * Coinbase (in progress).
