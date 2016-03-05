@@ -153,16 +153,18 @@ public class RealtimeOrderBookBuilder implements Runnable {
 					} else if (delta.type.equals("done")) {
 						Instant MarketTime = Instant.parse(delta.time);
 						Integer currentSequence = Integer.parseInt(delta.sequence);
-						Double price = Double.parseDouble(delta.price);
-						if (delta.side.equals("buy")) {
-							om.removeFromMap("bid", price, delta.order_id);
-							om.setSequence(currentSequence);
-							om.setMarketTime(MarketTime);
-						} else if (delta.side.equals("sell")) {
-							om.removeFromMap("ask", price, delta.order_id);
-							om.setSequence(currentSequence);
-							om.setMarketTime(MarketTime);
+						if (delta.order_type.equals("limit")) {
+							// Limit order, should be in the order book
+							// Market orders are not in the order book, so no action is required
+							Double price = Double.parseDouble(delta.price);
+							if (delta.side.equals("buy")) {
+								om.removeFromMap("bid", price, delta.order_id);
+							} else if (delta.side.equals("sell")) {
+								om.removeFromMap("ask", price, delta.order_id);
+							}
 						}
+						om.setSequence(currentSequence);
+						om.setMarketTime(MarketTime);
 						outboundQueue.add(om.emitOrderBook());
 					} else if (delta.type.equals("match")) {
 						// Two orders matched, includes distinction of maker/taker
