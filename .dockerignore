@@ -3,3 +3,4 @@
 *.lck
 src/*
 pom.xml
+makefile
