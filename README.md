@@ -5,7 +5,11 @@ See [ThreadKDBFeed](https://github.com/nof20/ThreadKDBFeed) for a component to s
 
 See [Documentation](https://github.com/nof20/ThreadMarketData/wiki) and a list of [Current Issues](https://github.com/nof20/ThreadMarketData/issues).
 
-Use Maven to build and run the Java code.  Use the makefile to build the Java and to Docker.
+## Build and run instructions
+
+* Use Maven to build and run the Java code.
+* Use the makefile to build Java and push code & configuration to Docker.
+* Run built code using the shell script.
 
 ## Exchanges supported
 
