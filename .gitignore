@@ -7,3 +7,5 @@ target/*
 OrderMapDump.txt
 *.log
 *.lck
+*.tar
+*.gz
