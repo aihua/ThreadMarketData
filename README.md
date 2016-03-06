@@ -8,7 +8,7 @@ See [Documentation](https://github.com/nof20/ThreadMarketData/wiki) and a list o
 ## Build and run instructions
 
 * Use Maven to build and run the Java code.
-* Use the makefile to build Java and push code & configuration to Docker.
+* Use the makefile to build Java and push code & configuration to Docker, or build a tar.gz for manual deployment.
 * Run built code using the shell script.
 
 ## Exchanges supported
