@@ -15,7 +15,7 @@ public class Products {
 	
 	// Assumes products available don't change during the life of the session
 	
-	final Logger log = Logger.getLogger("thread.marketdata.Products");
+	final Logger log = Logger.getLogger("main.Products");
 	final Gson gson = new Gson();
 	final Type collectionType = new TypeToken<ArrayList<Product>>(){}.getType();
 	
@@ -26,7 +26,7 @@ public class Products {
 		this.exchange = exchange;
 		if (! exchange.equals(Exchange.REPLAY)) {
 			try {
-				URL url = new URL(exchange.products);
+				URL url = new URL(exchange.rest + "/products");
 			    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 				this.products = gson.fromJson(in.readLine(), collectionType);
 				in.close();
@@ -36,7 +36,7 @@ public class Products {
 			}
 		} else {
 			try {
-				BufferedReader in = new BufferedReader(new FileReader(exchange.products));
+				BufferedReader in = new BufferedReader(new FileReader(exchange.rest));
 				this.products = gson.fromJson(in.readLine(), collectionType);
 				in.close();
 			} catch (Exception e) {
